@@ -5,7 +5,7 @@ The code in this project dependent upon existing code available from: https://ww
 
 ## spy-py extension
 
-Spy-py is a rewrite of the existing Tcl qspy scripts using Python. 
+Spy-py is a rewrite of the existing Tcl qspy and qutest scripts using Python. 
 
 File | Descripton
 ---- | ----------
