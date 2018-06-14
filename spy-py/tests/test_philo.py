@@ -20,22 +20,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
-import sys
 
-# Append the top level directory to the system path since python doesn't allow a relative imports there
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import config # This is just needed because qutest is in parent directory
+import unittest
+from qutest import qutest
+import time
+
+class test_philo(qutest):
+
+    def on_reset(self):
+        pass
 
 
-# Set to true to have test suite launch dpp test application on host, false to run over serial port
-# You must have the dpp_test executible on your path if you set this to true
-USE_LOCAL_DPP_TEST = True
+    def test_dummy1(self):
+        time.sleep(5)
 
-if USE_LOCAL_DPP_TEST: 
-    QSPY_TARGET_PORT = '-t' 
-    DPP_HOST_NAME = 'localhost' # Change to remote IP if dpp runs on another PC
-else:
-    # Change to port that qspy connects to the physciall target with, e.g.:  -cCOM3, -c/dev/ttyO4
-    QSPY_TARGET_PORT = '-cCOM3'
-    
+    #def test_dummy2(self):
+    #    time.sleep(5)
 
+    #def test_dummy3(self):
+    #    time.sleep(5)
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

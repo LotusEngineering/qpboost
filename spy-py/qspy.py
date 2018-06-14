@@ -201,10 +201,15 @@ class qspy(threading.Thread):
 
     def __init__(self):
         super().__init__()
-        self.tx_packet_sequence = 0
+        self.tx_packet_seq = 0
         self.socket = None
         self.alive = threading.Event()
-        self.alive.set()
+        self.rx_packet_seq = 0
+        self.rx_packet_errors = 0
+        self.rx_record_seq = 0
+        self.rx_record_errors = 0
+
+        
 
     def __del__(self):
         if self.socket is not None:
@@ -214,29 +219,50 @@ class qspy(threading.Thread):
     def run(self):
         while self.alive.isSet():
             try:
-                data = self.socket.recv(1024)
-               # print( "{0}({1})".format(data, data.hex()) )
+                packet = self.socket.recv(1024)
 
-                sequence = data[0]
-                recordID = data[1]
+                rx_sequence = packet[0]
+                recordID = packet[1]
+
                 if recordID < 128:
-                    record_name = QSpyRecords(recordID).name
+                    method_name = "OnRecord_" + QSpyRecords(recordID).name
+                    self.rx_record_seq += 1
+                    self.rx_record_seq &= 0xFF
+                    if self.rx_packet_seq != rx_sequence:
+                        print("Rx Record sequence error!")
+                        self.rx_record_errors += 1
+                        self.rx_record_seq = rx_sequence          
                 else:
-                    record_name = QSPY(recordID).name
-                print("Seq:{0}, Record :{1}, {2}".format(sequence, record_name, data))
+                    method_name = "OnPacket_" + QSPY(recordID).name
+                    self.rx_packet_seq += 1
+                    self.rx_packet_seq &= 0xFF
+                    if self.rx_packet_seq != rx_sequence:
+                        print("Rx Packet sequence error!")
+                        self.rx_packet_errors += 1
+                        self.rx_packet_seq = rx_sequence
+
+                print("Seq:{0}, {1}({2})".format(rx_sequence, method_name, packet.hex()))
 
                 try:
-                    method_name = "_".join(("On", record_name))
                     method = getattr(self.client, method_name)
-                    method(data)
+                    # Call client callback with packet
+                    method(packet)
+
                 except AttributeError:
                     raise NotImplementedError("Class `{}` does not implement `{}`".format(self.client.__class__.__name__, method_name))
 
             except IOError as e:
-                print("QSpy Socket error:", str(e) )
-            pass
+                # We expect this for now until we refactor the detach()
+                #print("QSpy Socket error:", str(e) )
+                e
+                pass
 
-                
+    @classmethod
+    def parse_QS_TEXT(cls, packet):
+        """ Returns a tuple of (record, line) 
+        """
+        assert  QSpyRecords(packet[1]) == QSpyRecords.QS_TEXT, "Wronge record type for parser" 
+        return (QSpyRecords(packet[2]), packet[3:])          
 
     def attach(self, client, host='localhost', port=7701, channels=QS_CHANNEL.TEXT, local_port=None):
         """ Attach to the QSpy backend
@@ -248,6 +274,7 @@ class qspy(threading.Thread):
         local_port -- the local/client port to use (default None for automatic)
         """
 
+        # Store client for callback
         self.client = client
 
         # Store address info
@@ -263,19 +290,19 @@ class qspy(threading.Thread):
         self.socket.connect((host, port))
 
         # Start receive thread
+        self.alive.set()
         self.start()
 
         self.sendAttach(channels)
 
     def detach(self):
-        self.sendPacket(struct.pack('< B', QSPY.DETACH.value))
-        time.sleep(0.300)
         self.alive.clear()
+        self.sendPacket(struct.pack('< B', QSPY.DETACH.value))
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         self.socket = None
+        self.client = None
         threading.Thread.join(self)
-        pass
     
     def sendAttach(self, channels):
         self.sendPacket(struct.pack(
@@ -333,7 +360,7 @@ class qspy(threading.Thread):
         self.sendPacket(packet)
 
     def sendTestProbe(self):
-        pass
+        raise NotImplementedError
 
     def sendEvent(self, ao_priority, signal, parameters = None):
 
@@ -370,17 +397,17 @@ class qspy(threading.Thread):
         packet -- packet to send either a bytes() or bytearray() object
         """
         
-        tx_packet = bytearray({self.tx_packet_sequence})
+        tx_packet = bytearray({self.tx_packet_seq})
         tx_packet.extend(packet)
 
         self.socket.send(tx_packet)
 
-        self.tx_packet_sequence += 1
-        self.tx_packet_sequence = self.tx_packet_sequence % 256
+        self.tx_packet_seq += 1
+        self.tx_packet_seq &= 0xFF
 
 
     def _origsendPacket(self, binary_packet, string_packet = None):
-        tx_packet = bytearray({self.tx_packet_sequence})
+        tx_packet = bytearray({self.tx_packet_seq})
         tx_packet.extend(binary_packet)
 
         if string_packet is not None:
@@ -389,8 +416,8 @@ class qspy(threading.Thread):
 
         self.socket.send(tx_packet)
 
-        self.tx_packet_sequence += 1
-        self.tx_packet_sequence = self.tx_packet_sequence % 256
+        self.tx_packet_seq += 1
+        self.tx_packet_seq = self.tx_packet_seq % 256
 
 
     @staticmethod
