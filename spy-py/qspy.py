@@ -183,6 +183,24 @@ class QS_OBJ_KIND(IntEnum):
     AP = 5, #Application-Specific 
     SM_AO = 6 #Active object and state machine
 
+#! QS record groups for filters
+class FILTER (IntEnum):
+    ON = 1,   # all maskable QS records on
+    OFF = 2,   # all maskable QS records on
+    SM = 3,         # State Machine QS records
+    AO = 4,         # Active Object QS records
+    EQ = 5,         # Event Queues QS records
+    MP = 6,         # Memory Pools QS records
+    TE = 7,         # Time Events QS records
+    QF = 8,         # QF QS records
+    SC = 9,         # Scheduler QS records
+    U0 = 10,         # User Group 70-79 records
+    U1 = 11,         # User Group 80-89 records
+    U2 = 12,         # User Group 90-99 records
+    U3 = 13,         # User Group 100-109 records
+    U4 = 14,         # User Group 110-124 records
+    UA = 15          # All User records
+
 
 # Port specific formats used in struct.pack
 theFmt = {
@@ -201,10 +219,15 @@ class qspy(threading.Thread):
 
     def __init__(self):
         super().__init__()
-        self.tx_packet_sequence = 0
+        self.tx_packet_seq = 0
         self.socket = None
         self.alive = threading.Event()
-        self.alive.set()
+        self.rx_packet_seq = 0
+        self.rx_packet_errors = 0
+        self.rx_record_seq = 0
+        self.rx_record_errors = 0
+
+        
 
     def __del__(self):
         if self.socket is not None:
@@ -214,29 +237,50 @@ class qspy(threading.Thread):
     def run(self):
         while self.alive.isSet():
             try:
-                data = self.socket.recv(1024)
-               # print( "{0}({1})".format(data, data.hex()) )
+                packet = self.socket.recv(1024)
 
-                sequence = data[0]
-                recordID = data[1]
+                rx_sequence = packet[0]
+                recordID = packet[1]
+
                 if recordID < 128:
-                    record_name = QSpyRecords(recordID).name
+                    method_name = "OnRecord_" + QSpyRecords(recordID).name
+                    self.rx_record_seq += 1
+                    self.rx_record_seq &= 0xFF
+                    if self.rx_packet_seq != rx_sequence:
+                        print("Rx Record sequence error!")
+                        self.rx_record_errors += 1
+                        self.rx_record_seq = rx_sequence          
                 else:
-                    record_name = QSPY(recordID).name
-                print("Seq:{0}, Record :{1}, {2}".format(sequence, record_name, data))
+                    method_name = "OnPacket_" + QSPY(recordID).name
+                    self.rx_packet_seq += 1
+                    self.rx_packet_seq &= 0xFF
+                    if self.rx_packet_seq != rx_sequence:
+                        print("Rx Packet sequence error!")
+                        self.rx_packet_errors += 1
+                        self.rx_packet_seq = rx_sequence
+
+                print("Seq:{0}, {1}({2})".format(rx_sequence, method_name, packet.hex()))
 
                 try:
-                    method_name = "_".join(("On", record_name))
                     method = getattr(self.client, method_name)
-                    method(data)
+                    # Call client callback with packet
+                    method(packet)
+
                 except AttributeError:
                     raise NotImplementedError("Class `{}` does not implement `{}`".format(self.client.__class__.__name__, method_name))
 
             except IOError as e:
-                print("QSpy Socket error:", str(e) )
-            pass
+                # We expect this for now until we refactor the detach()
+                #print("QSpy Socket error:", str(e) )
+                e
+                pass
 
-                
+    @classmethod
+    def parse_QS_TEXT(cls, packet):
+        """ Returns a tuple of (record, line) of types QSpyRecords, string respectively
+        """
+        assert  QSpyRecords(packet[1]) == QSpyRecords.QS_TEXT, "Wronge record type for parser" 
+        return (QSpyRecords(packet[2]), packet[3:].decode("utf-8") )          
 
     def attach(self, client, host='localhost', port=7701, channels=QS_CHANNEL.TEXT, local_port=None):
         """ Attach to the QSpy backend
@@ -248,6 +292,7 @@ class qspy(threading.Thread):
         local_port -- the local/client port to use (default None for automatic)
         """
 
+        # Store client for callback
         self.client = client
 
         # Store address info
@@ -263,19 +308,19 @@ class qspy(threading.Thread):
         self.socket.connect((host, port))
 
         # Start receive thread
+        self.alive.set()
         self.start()
 
         self.sendAttach(channels)
 
     def detach(self):
-        self.sendPacket(struct.pack('< B', QSPY.DETACH.value))
-        time.sleep(0.300)
         self.alive.clear()
+        self.sendPacket(struct.pack('< B', QSPY.DETACH.value))
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         self.socket = None
+        self.client = None
         threading.Thread.join(self)
-        pass
     
     def sendAttach(self, channels):
         self.sendPacket(struct.pack(
@@ -301,7 +346,59 @@ class qspy(threading.Thread):
 
         self.sendPacket(packet)
 
-    def sendGlobalFilters(self, filter0, filter1, filter2, filter3):
+    def sendGlobalFilters(self, *args):
+
+        filter0 = 0
+        filter1 = 0
+        filter2 = 0
+        filter3 = 0
+
+        for _filter in args:
+            if _filter == FILTER.OFF:
+                pass
+            elif _filter == FILTER.ON:
+                # all filters on
+                filter0 = 0xFFFFFFFF
+                filter1 = 0xFFFFFFFF
+                filter2 = 0xFFFFFFFF
+                filter3 = 0x1FFFFFFF
+                break # no point in continuing
+            elif _filter == FILTER.SM:  # state machines
+                filter0 |= 0x000003FE
+                filter1 |= 0x03800000
+            elif _filter == FILTER.AO:   # active objects
+                filter0 |= 0x0007FC00
+                filter1 |= 0x00002000
+            elif _filter == FILTER.EQ:  # raw queues (for deferral)
+                filter0 |= 0x00780000
+                filter2 |= 0x00004000
+            elif _filter == FILTER.MP: # raw memory pools
+                filter0 |= 0x03000000
+                filter2 |= 0x00008000
+            elif _filter == FILTER.QF: # framework
+                filter0 |= 0xFC000000
+                filter1 |= 0x00001FC0
+            elif _filter == FILTER.TE: # time events
+                filter1 |= 0x0000007F
+            elif _filter == FILTER.SC: # scheduler
+                filter1 |= 0x007F0000
+            elif _filter == FILTER.U0: # user 70-79
+                filter2 |= 0x0000FFC0
+            elif _filter == FILTER.U1: # user 80-89
+                filter2 |= 0x03FF0000
+            elif _filter == FILTER.U2: # user 90-99
+                filter2 |= 0xFC000000
+                filter3 |= 0x0000000F
+            elif _filter == FILTER.U3: # user 100-109
+                filter3 |= 0x00003FF0
+            elif _filter == FILTER.U4: # user 110-124
+                filter3 |= 0x1FFFC000
+            elif _filter == FILTER.UA: # user 70-124 (all)
+                filter2 |= 0xFFFFFFC0
+                filter3 |= 0x1FFFFFFF
+            else:
+                assert 0, 'invalid filter group'
+
         self.sendPacket(struct.pack('< B B L L L L', QS_RX.GLB_FILTER,  16, filter0, filter1, filter2, filter3))
 
  
@@ -333,7 +430,7 @@ class qspy(threading.Thread):
         self.sendPacket(packet)
 
     def sendTestProbe(self):
-        pass
+        raise NotImplementedError
 
     def sendEvent(self, ao_priority, signal, parameters = None):
 
@@ -370,27 +467,14 @@ class qspy(threading.Thread):
         packet -- packet to send either a bytes() or bytearray() object
         """
         
-        tx_packet = bytearray({self.tx_packet_sequence})
+        tx_packet = bytearray({self.tx_packet_seq})
         tx_packet.extend(packet)
 
         self.socket.send(tx_packet)
 
-        self.tx_packet_sequence += 1
-        self.tx_packet_sequence = self.tx_packet_sequence % 256
+        self.tx_packet_seq += 1
+        self.tx_packet_seq &= 0xFF
 
-
-    def _origsendPacket(self, binary_packet, string_packet = None):
-        tx_packet = bytearray({self.tx_packet_sequence})
-        tx_packet.extend(binary_packet)
-
-        if string_packet is not None:
-            # extend packet with null terminated string
-            tx_packet.extend(_stringToBinaryPacket(string_packet))
-
-        self.socket.send(tx_packet)
-
-        self.tx_packet_sequence += 1
-        self.tx_packet_sequence = self.tx_packet_sequence % 256
 
 
     @staticmethod

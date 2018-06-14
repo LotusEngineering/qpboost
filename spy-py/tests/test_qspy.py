@@ -68,9 +68,10 @@ class test_qspy(unittest.TestCase):
         else:
             self.dpp_process = None 
 
-        # Create cut and attach
+        # Create cut and attach test
         self.cut = qspy()
         self.cut.attach(self)
+
         # Need to reset embedded targets so that dictionary goes out
         if not config.USE_LOCAL_DPP_TEST:
             self.cut.sendReset()
@@ -92,14 +93,19 @@ class test_qspy(unittest.TestCase):
             self.dpp_process.terminate()
             self.dpp_process.wait()
 
-    def On_ATTACH(self, data):
-        print("On_ATTACH callback:", data)
+    def OnPacket_ATTACH(self, packet):
+        print("OnPacket_ATTACH callback:", packet)
     
-    def On_QS_TARGET_INFO(self, data):
-        print("On_QS_TARGET_INFO callback:", data)
+    def OnRecord_QS_TARGET_INFO(self, packet):
+        print("OnRecord_QS_TARGET_INFO callback:", packet)
 
-    def On_QS_TEXT(self, data):
-        print("On_QS_TEXT callback:", data)
+    def OnRecord_QS_TEXT(self, packet):
+        record, line = qspy.parse_QS_TEXT(packet)
+        print("OnRecord_QS_TEXT record:{0}, line:{1}".format(record.name, line) )
+    
+    def OnRecord_QS_OBJ_DICT(self, data):
+        print("OnRecord_QS_OBJ_DICT callback:", data)
+
 
     #@unittest.skip("")
     def test_sendCommand(self):
@@ -115,7 +121,7 @@ class test_qspy(unittest.TestCase):
         self.cut.sendCurrentObject(QS_OBJ_KIND.SM_AO, "l_philo<2>")
 
     def test_sendEvent(self):
-        self.cut.sendGlobalFilters(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x1FFFFFFF)        
+        self.cut.sendGlobalFilters(FILTER.SM, FILTER.AO, FILTER.UA)        
         self.cut.sendCurrentObject(QS_OBJ_KIND.SM_AO, "l_philo<2>")
         #self.cut.sendLocalFilter(QS_OBJ_KIND.SM_AO, "l_philo<2>")
         

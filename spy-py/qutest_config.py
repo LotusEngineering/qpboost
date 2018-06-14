@@ -20,22 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
-import sys
-
-# Append the top level directory to the system path since python doesn't allow a relative imports there
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# This file is the configuraton parameters for qutest
 
 
-# Set to true to have test suite launch dpp test application on host, false to run over serial port
-# You must have the dpp_test executible on your path if you set this to true
-USE_LOCAL_DPP_TEST = True
-
-if USE_LOCAL_DPP_TEST: 
-    QSPY_TARGET_PORT = '-t' 
-    DPP_HOST_NAME = 'localhost' # Change to remote IP if dpp runs on another PC
-else:
-    # Change to port that qspy connects to the physciall target with, e.g.:  -cCOM3, -c/dev/ttyO4
-    QSPY_TARGET_PORT = '-cCOM3'
-    
-
+QSPY_TARGET_PORT = '-t'
+TARGET_EXECUTABLE = 'test_dpp' #None    # Set this to the target executible name (e.g. test_dpp), target must be on system path 
+TARGET_HOST_NAME = 'localhost'          # Set to the IP address of TARGET_EXECUTABLE
+TARGET_START_TIMEOUT_SEC = 5.0        # How long we wait for the target to come up and send the target info record
+EXPECT_TIMEOUT_SEC = 0.500
