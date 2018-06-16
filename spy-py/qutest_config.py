@@ -26,5 +26,9 @@
 QSPY_TARGET_PORT = '-t'
 TARGET_EXECUTABLE = 'test_dpp' #None    # Set this to the target executible name (e.g. test_dpp), target must be on system path 
 TARGET_HOST_NAME = 'localhost'          # Set to the IP address of TARGET_EXECUTABLE
+<<<<<<< HEAD
 TARGET_START_TIMEOUT_SEC = 5.0        # How long we wait for the target to come up and send the target info record
 EXPECT_TIMEOUT_SEC = 0.500
+=======
+TARGET_START_TIMEOUT_SEC = 5.0        # How long we wait for the target to come up and send the target info record
+>>>>>>> 31443f40a5baed967f906af0136cb61e5b513752

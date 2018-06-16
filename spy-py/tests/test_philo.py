@@ -23,7 +23,11 @@
 
 import config # This is just needed because qutest is in parent directory
 import unittest
+<<<<<<< HEAD
 from qutest import qutest, FILTER, QS_OBJ_KIND
+=======
+from qutest import qutest
+>>>>>>> 31443f40a5baed967f906af0136cb61e5b513752
 import time
 
 class test_philo(qutest):

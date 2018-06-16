@@ -277,10 +277,17 @@ class qspy(threading.Thread):
 
     @classmethod
     def parse_QS_TEXT(cls, packet):
+<<<<<<< HEAD
         """ Returns a tuple of (record, line) of types QSpyRecords, string respectively
         """
         assert  QSpyRecords(packet[1]) == QSpyRecords.QS_TEXT, "Wronge record type for parser" 
         return (QSpyRecords(packet[2]), packet[3:].decode("utf-8") )          
+=======
+        """ Returns a tuple of (record, line) 
+        """
+        assert  QSpyRecords(packet[1]) == QSpyRecords.QS_TEXT, "Wronge record type for parser" 
+        return (QSpyRecords(packet[2]), packet[3:])          
+>>>>>>> 31443f40a5baed967f906af0136cb61e5b513752
 
     def attach(self, client, host='localhost', port=7701, channels=QS_CHANNEL.TEXT, local_port=None):
         """ Attach to the QSpy backend
@@ -474,7 +481,24 @@ class qspy(threading.Thread):
 
         self.tx_packet_seq += 1
         self.tx_packet_seq &= 0xFF
+<<<<<<< HEAD
 
+=======
+
+
+    def _origsendPacket(self, binary_packet, string_packet = None):
+        tx_packet = bytearray({self.tx_packet_seq})
+        tx_packet.extend(binary_packet)
+
+        if string_packet is not None:
+            # extend packet with null terminated string
+            tx_packet.extend(_stringToBinaryPacket(string_packet))
+
+        self.socket.send(tx_packet)
+
+        self.tx_packet_seq += 1
+        self.tx_packet_seq = self.tx_packet_seq % 256
+>>>>>>> 31443f40a5baed967f906af0136cb61e5b513752
 
 
     @staticmethod

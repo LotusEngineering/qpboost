@@ -127,9 +127,10 @@ class qutest(unittest.TestCase):
 
        
 
+
     ################### qspy backend callbacks #######################
     
-    def OnRecord_QS_TARGET_INFO(self, record):
+    def OnRecord_QS_TARGET_INFO(self, packet):
         self.have_target_event.set()
 
     def OnPacket_ATTACH(self, packet):
