@@ -29,6 +29,20 @@ from threading import Event
 from queue import Queue
 
 
+def noreset(test_method):
+    ''' Test decorator that prevents a reset from happening '''
+    
+    def wrapper(*args,**kwargs):
+        print("calling test")
+        CONFIG.RESET_TARGET_ON_SETUP = False
+        retval = test_method(*args,**kwargs)
+        CONFIG.RESET_TARGET_ON_SETUP = True        
+        print("called test")
+        return retval
+
+    return wrapper
+
+
 
 class qutest(unittest.TestCase):
  
@@ -72,26 +86,29 @@ class qutest(unittest.TestCase):
         self.have_target_event.clear()
 
         # If running with a local target, kill and restart it
-        if CONFIG.TARGET_EXECUTABLE is not None:
-            
-            # Stop existing target executable
-            if self.target_process is not None:
-                self.qspy.sendReset()
-                self.target_process.terminate()
-                self.target_process.wait()
-                self.target_process = None
+        if CONFIG.TARGET_EXECUTABLE is not None:          
+            if CONFIG.RESET_TARGET_ON_SETUP:
+                # Stop existing target executable
+                if self.target_process is not None:
+                    self.qspy.sendReset()
+                    self.target_process.terminate()
+                    self.target_process.wait()
+                    self.target_process = None
 
-            # Start new target
-            self.target_process = Popen(
-                [CONFIG.TARGET_EXECUTABLE, CONFIG.TARGET_HOST_NAME], creationflags=CREATE_NEW_CONSOLE)
-            time.sleep(1.0) # Wait for applicaiton to start 
+            if self.target_process is None:
+                # Start first or new target
+                self.target_process = Popen(
+                    [CONFIG.TARGET_EXECUTABLE, CONFIG.TARGET_HOST_NAME], creationflags=CREATE_NEW_CONSOLE)
+                time.sleep(1.0) # Wait for applicaiton to start
+             
         else: 
-            self.qspy.sendReset()
+            if CONFIG.RESET_TARGET_ON_SETUP:            
+                self.qspy.sendReset()
 
         # Wait for target to be back up
         self.assertTrue(self.have_target_event.wait(CONFIG.TARGET_START_TIMEOUT_SEC))
 
-        # Call on reset if defined
+        # Call on_reset if defined
         if hasattr(self, "on_reset"):
             on_reset_method = getattr(self, 'on_reset')
             on_reset_method()
@@ -105,10 +122,24 @@ class qutest(unittest.TestCase):
     def tearDown(self):
         super().tearDown()
 
-    def expect(self, matchstring):
+    def expect(self, match):
         next_packet = self.text_queue.get(timeout=CONFIG.EXPECT_TIMEOUT_SEC)
-        record, line = qspy.parse_QS_TEXT(next_packet)
-        self.assertRegex(line, matchstring)
+        _, line = qspy.parse_QS_TEXT(next_packet)
+
+        magic_string = '%timestamp'
+        
+        if match.startswith(magic_string):
+            line_start = len(magic_string) 
+        else:
+            line_start = 0
+
+        if match.endswith('*'):
+            line_end = match.find('*', line_start)
+            match = match.rstrip('*')
+        else:
+            line_end = len(match)
+
+        self.assertEqual(match[line_start:], line[line_start:line_end] )
 
     def expect_pause(self):
         self.expect('           TstPause')
