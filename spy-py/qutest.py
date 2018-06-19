@@ -239,7 +239,7 @@ class qutest_context():
     def OnRecord_QS_TEXT(self, record):
         # put packet in text queue
         self.text_queue.put(record)
-        recordId, line = self.qspy.parse_QS_TEXT(record)
+        #recordId, line = self.qspy.parse_QS_TEXT(record)
         #print('OnRecord_QS_TEXT record:{0}, line:"{1}"'.format(recordId.name, line) )
 
 
