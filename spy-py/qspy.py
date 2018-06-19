@@ -186,20 +186,20 @@ class QS_OBJ_KIND(IntEnum):
 #! QS record groups for filters
 class FILTER (IntEnum):
     ON = 1,   # all maskable QS records on
-    OFF = 2,   # all maskable QS records on
-    SM = 3,         # State Machine QS records
-    AO = 4,         # Active Object QS records
-    EQ = 5,         # Event Queues QS records
-    MP = 6,         # Memory Pools QS records
-    TE = 7,         # Time Events QS records
-    QF = 8,         # QF QS records
-    SC = 9,         # Scheduler QS records
-    U0 = 10,         # User Group 70-79 records
-    U1 = 11,         # User Group 80-89 records
-    U2 = 12,         # User Group 90-99 records
-    U3 = 13,         # User Group 100-109 records
-    U4 = 14,         # User Group 110-124 records
-    UA = 15          # All User records
+    OFF = 2,  # all maskable QS records on
+    SM = 3,   # State Machine QS records
+    AO = 4,   # Active Object QS records
+    EQ = 5,   # Event Queues QS records
+    MP = 6,   # Memory Pools QS records
+    TE = 7,   # Time Events QS records
+    QF = 8,   # QF QS records
+    SC = 9,   # Scheduler QS records
+    U0 = 10,  # User Group 70-79 records
+    U1 = 11,  # User Group 80-89 records
+    U2 = 12,  # User Group 90-99 records
+    U3 = 13,  # User Group 100-109 records
+    U4 = 14,  # User Group 110-124 records
+    UA = 15   # All User records
 
 
 # Port specific formats used in struct.pack
@@ -214,6 +214,14 @@ theFmt = {
     'poolBlk': 'h',
     'tevtCtr': 'h'
     }
+
+
+# Special priority values used to send commands
+class PRIO_COMMAND(IntEnum):
+    PUBLISH = 0,         # Publish event
+    DISPATCH = 255,      # dispatch event to the Current Object(SM)
+    DO_INIT_TRANS = 254, # take the top-most initial transition in the Current Object (SM)
+    POST = 253           # post event to the Current Object (AO)
 
 
 
@@ -261,7 +269,7 @@ class qspy(threading.Thread):
                     self.rx_packet_seq += 1
                     self.rx_packet_seq &= 0xFF
 
-                print("Seq:{0}, {1}({2})".format(rx_sequence, method_name, packet.hex()))
+                #print("Seq:{0}, {1}({2})".format(rx_sequence, method_name, packet.hex()))
 
                 try:
                     method = getattr(self.client, method_name)
@@ -336,6 +344,7 @@ class qspy(threading.Thread):
         object_kind -- kind of object from QS_OBJ_KIND
         object_id -- the object which can be an address integer or a dictionary name string
         """
+        assert isinstance(object_kind, QS_OBJ_KIND)
 
         format_string = '< B B ' + theFmt['objPtr']
 
@@ -432,11 +441,25 @@ class qspy(threading.Thread):
 
         self.sendPacket(packet)
 
-    def sendTestProbe(self):
-        raise NotImplementedError
+    def sendTestProbe(self, function, data):
+        format_string = '< B I' +  theFmt['funPtr']
+
+        if isinstance(function, int):
+            # Send directly to target
+            packet = struct.pack(format_string, QS_RX.TEST_PROBE, data, function)
+        else:
+            # Send to QSPY to provide 'function' from Fun Dictionary
+            packet = bytearray(struct.pack(format_string, QSPY.SEND_TEST_PROBE, data, 0))
+            # add string function name to end
+            packet.extend(qspy.string_to_binary(function))
+        
+        self.sendPacket(packet)
+
+    def sendTick(self, rate):
+        packet = struct.pack('< BB', QS_RX.TICK, rate)
+        self.sendPacket(packet)
 
     def sendEvent(self, ao_priority, signal, parameters = None):
-
         format_string = '< B B ' + theFmt['sig'] + 'h'
 
         if parameters is not None:

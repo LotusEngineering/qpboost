@@ -22,11 +22,18 @@
 
 # This file is the configuraton parameters for qutest
 
+USE_HOST_TARGET = False
+AUTOSTART_QSPY_HOST = True
 
-QSPY_TARGET_PORT = '-t'
-TARGET_EXECUTABLE = 'test_dpp' #None    # Set this to the target executible name (e.g. test_dpp), target must be on system path 
-TARGET_HOST_NAME = 'localhost'          # Set to the IP address of TARGET_EXECUTABLE
-TARGET_START_TIMEOUT_SEC = 5.0       # How long we wait for the target to come up and send the target info record
-EXPECT_TIMEOUT_SEC = 0.500
+if USE_HOST_TARGET:
+    QSPY_TARGET_PORT = '-t'
+    TARGET_EXECUTABLE = 'test_dpp'         # Set this to the target executible name (e.g. test_dpp), target must be on system path 
+    TARGET_HOST_NAME = 'localhost'          # Set to the IP address of TARGET_EXECUTABLE
+else:
+    QSPY_TARGET_PORT = '-cCOM3'
 
-RESET_TARGET_ON_SETUP = False    # Reset the target on every test setUp call
+
+TARGET_START_TIMEOUT_SEC = 1.000       # How long we wait for the target to come up and send the target info record
+EXPECT_TIMEOUT_SEC = 0.800
+
+RESET_TARGET_ON_SETUP = True    # Reset the target on every test setUp call

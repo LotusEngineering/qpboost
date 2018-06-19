@@ -23,7 +23,7 @@
 import config
 import unittest
 from subprocess import Popen, CREATE_NEW_CONSOLE
-from qspy import qspy, QS_CHANNEL, QS_OBJ_KIND
+from qspy import qspy, QS_CHANNEL, QS_OBJ_KIND, FILTER
 import time
 import struct
 

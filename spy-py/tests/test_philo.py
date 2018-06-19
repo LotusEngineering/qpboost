@@ -22,46 +22,90 @@
 
 
 import config # This is just needed because qutest is in parent directory
-import unittest
-from qutest import qutest, FILTER, QS_OBJ_KIND, noreset
+from  qutest import FILTER, QS_OBJ_KIND, qutest, qutest_noreset, qutest_session
 import time
+import pytest
+import sys
+import struct
 
-class test_philo(qutest):
+@pytest.fixture
+def on_reset(qutest):
+    qutest.expect_pause()
+    qutest.Continue()  # note continue in lower case. is a reserved word in python
+    qutest.glb_filter(FILTER.SM, FILTER.AO, FILTER.UA)
+    qutest.current_obj(QS_OBJ_KIND.SM_AO, 'l_philo<2>')
 
-    def on_reset(self):
-        self.expect_pause()
-        self.Continue()  # note continue in lower case. is a reserved word in python
-        self.glb_filter(FILTER.SM, FILTER.AO, FILTER.UA)
-        self.current_obj(QS_OBJ_KIND.SM_AO, 'l_philo<2>')
 
+def test_TIMEOUT_Philo_post(qutest, on_reset):
+    qutest.post('TIMEOUT_SIG')
+    qutest.expect("%timestamp AO-Post  Sdr=QS_RX,Obj=l_philo<2>,Evt<Sig=TIMEOUT_SIG,*")
+    qutest.expect("%timestamp AO-GetL  Obj=l_philo<2>,Evt<Sig=TIMEOUT_SIG,*")
+    qutest.expect("%timestamp Disp===> Obj=l_philo<2>,Sig=TIMEOUT_SIG,State=Philo::thinking")
+    qutest.expect("===RTC===> St-Exit  Obj=l_philo<2>,State=Philo::thinking")
+    qutest.expect("%timestamp AO-Post  Sdr=l_philo<2>,Obj=l_table,Evt<Sig=HUNGRY_SIG,*")
+    qutest.expect("===RTC===> St-Entry Obj=l_philo<2>,State=Philo::hungry")
+    qutest.expect("%timestamp ===>Tran Obj=l_philo<2>,Sig=TIMEOUT_SIG,State=Philo::thinking->Philo::hungry")
+    qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
 
-    def test_TIMEOUT_Philo_post(self):
-        self.post('TIMEOUT_SIG')
-        self.expect("%timestamp AO-Post  Sdr=QS_RX,Obj=l_philo<2>,Evt<Sig=TIMEOUT_SIG,*")
-        self.expect("%timestamp AO-GetL  Obj=l_philo<2>,Evt<Sig=TIMEOUT_SIG,*")
-        self.expect("%timestamp Disp===> Obj=l_philo<2>,Sig=TIMEOUT_SIG,State=Philo::thinking")
-        self.expect("===RTC===> St-Exit  Obj=l_philo<2>,State=Philo::thinking")
-        self.expect("%timestamp AO-Post  Sdr=l_philo<2>,Obj=l_table,Evt<Sig=HUNGRY_SIG,*")
-        self.expect("===RTC===> St-Entry Obj=l_philo<2>,State=Philo::hungry")
-        self.expect("%timestamp ===>Tran Obj=l_philo<2>,Sig=TIMEOUT_SIG,State=Philo::thinking->Philo::hungry")
-        self.expect("%timestamp Trg-Done QS_RX_EVENT")
+def test_publish_EAT_2(qutest_noreset): 
+    qutest = qutest_noreset # Rename for consistancy
+    qutest.loc_filter(QS_OBJ_KIND.SM_AO, 'l_philo<2>')
+    qutest.publish('EAT_SIG',  struct.pack('< B', 2)) # Send byte of value 2
+    qutest.expect("%timestamp AO-Post  Sdr=QS_RX,Obj=l_philo<2>,Evt<Sig=EAT_SIG,*")
+    qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
+    qutest.expect("%timestamp AO-GetL  Obj=l_philo<2>,Evt<Sig=EAT_SIG,*")
+    qutest.expect("%timestamp Disp===> Obj=l_philo<2>,Sig=EAT_SIG,State=Philo::hungry")
+    qutest.expect("===RTC===> St-Entry Obj=l_philo<2>,State=Philo::eating")
+    qutest.expect("%timestamp ===>Tran Obj=l_philo<2>,Sig=EAT_SIG,State=Philo::hungry->Philo::eating")
+    qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
 
-    #@noreset
-    def test_publish_EAT_2(self): 
-        pass
-        """         loc_filter SM_AO l_philo<2>
-        publish EAT_SIG [binary format c 2]
-        expect "%timestamp AO-Post  Sdr=QS_RX,Obj=l_philo<2>,Evt<Sig=EAT_SIG,*"
-        expect "%timestamp Trg-Done QS_RX_EVENT"
-        expect "%timestamp AO-GetL  Obj=l_philo<2>,Evt<Sig=EAT_SIG,*"
-        expect "%timestamp Disp===> Obj=l_philo<2>,Sig=EAT_SIG,State=Philo::hungry"
-        expect "===RTC===> St-Entry Obj=l_philo<2>,State=Philo::eating"
-        expect "%timestamp ===>Tran Obj=l_philo<2>,Sig=EAT_SIG,State=Philo::hungry->Philo::eating"
-        expect "%timestamp Trg-Done QS_RX_EVENT"
-        """
+def test_TIMEOUT_Philo_thinking_ASSERT(qutest, on_reset):
+    qutest.probe('QActive::post_', 1)
+    qutest.dispatch('TIMEOUT_SIG')
+    qutest.expect("%timestamp Disp===> Obj=l_philo<2>,Sig=TIMEOUT_SIG,State=Philo::thinking")
+    qutest.expect("===RTC===> St-Exit  Obj=l_philo<2>,State=Philo::thinking")
+    qutest.expect("%timestamp TstProbe Fun=QActive::post_,Data=1")
+    qutest.expect("%timestamp =ASSERT= Mod=qf_actq,Loc=110")
 
-    def test_dummy3(self):
-        time.sleep(5)
+def test_TIMEOUT_Philo_eating_PUBLISH_from_AO(qutest, on_reset):
+    qutest.glb_filter(FILTER.OFF)
+    qutest.dispatch('TIMEOUT_SIG')
+    qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
+    qutest.dispatch('EAT_SIG', struct.pack('< B', 2))
+    qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
+    qutest.glb_filter(FILTER.SM, FILTER.AO, FILTER.QF)
+    qutest.dispatch('TIMEOUT_SIG')
+    qutest.expect("%timestamp QF-New   Sig=TIMEOUT_SIG,*")
+    qutest.expect("%timestamp Disp===> Obj=l_philo<2>,Sig=TIMEOUT_SIG,State=Philo::eating")
+    qutest.expect("%timestamp QF-New   Sig=DONE_SIG,*")
+    qutest.expect("%timestamp QF-Pub   Sdr=l_philo<2>,Evt<Sig=DONE_SIG,Pool=1,Ref=0>")
+    qutest.expect("%timestamp AO-Post  Sdr=l_philo<2>,Obj=l_table,Evt<Sig=DONE_SIG,Pool=1,Ref=2>,*")
+    qutest.expect("%timestamp QF-gcA   Evt<Sig=DONE_SIG,Pool=1,Ref=2>")
+    qutest.expect("===RTC===> St-Exit  Obj=l_philo<2>,State=Philo::eating")
+    qutest.expect("===RTC===> St-Entry Obj=l_philo<2>,State=Philo::thinking")
+    qutest.expect("%timestamp ===>Tran Obj=l_philo<2>,Sig=TIMEOUT_SIG,State=Philo::eating->Philo::thinking")
+    qutest.expect("%timestamp QF-gc    Evt<Sig=TIMEOUT_SIG,Pool=1,Ref=1>")
+    qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
+
+def test_timeEvt_Philo_tick(qutest, on_reset):
+    qutest.glb_filter(FILTER.SM, FILTER.AO, FILTER.TE)
+    qutest.current_obj(QS_OBJ_KIND.TE, 'l_philo<2>.m_timeEvt')
+    qutest.tick()
+    qutest.expect("           TE0-ADis Obj=l_philo<2>.m_timeEvt,AO=l_philo<2>")
+    qutest.expect("%timestamp TE0-Post Obj=l_philo<2>.m_timeEvt,Sig=TIMEOUT_SIG,AO=l_philo<2>")
+    qutest.expect("%timestamp AO-Post  Sdr=QS_RX,Obj=l_philo<2>,Evt<Sig=TIMEOUT_SIG*")
+    qutest.expect("%timestamp AO-GetL  Obj=l_philo<2>,Evt<Sig=TIMEOUT_SIG*")
+    qutest.expect("%timestamp Disp===> Obj=l_philo<2>,Sig=TIMEOUT_SIG,State=Philo::thinking")
+    qutest.expect("%timestamp TE0-DisA Obj=l_philo<2>.m_timeEvt,AO=l_philo<2>")
+    qutest.expect("===RTC===> St-Exit  Obj=l_philo<2>,State=Philo::thinking")
+    qutest.expect("%timestamp AO-Post  Sdr=l_philo<2>,Obj=l_table,Evt<Sig=HUNGRY_SIG*")
+    qutest.expect("===RTC===> St-Entry Obj=l_philo<2>,State=Philo::hungry")
+    qutest.expect("%timestamp ===>Tran Obj=l_philo<2>,Sig=TIMEOUT_SIG,State=Philo::thinking->Philo::hungry")
+    qutest.expect("%timestamp Trg-Done QS_RX_TICK")
+
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    options = ['-x', '-v', '--tb=short']
+    options.extend(sys.argv)
+    pytest.main(options)
+
