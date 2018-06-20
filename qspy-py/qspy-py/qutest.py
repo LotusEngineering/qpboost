@@ -24,7 +24,7 @@ import pytest
 from subprocess import Popen, CREATE_NEW_CONSOLE
 from qspy import qspy, QS_CHANNEL, QS_OBJ_KIND, FILTER, PRIO_COMMAND
 import time
-import qutest_config as CONFIG
+import config as CONFIG
 from threading import Event
 from queue import Queue
 
@@ -34,26 +34,35 @@ from queue import Queue
 def qutest_session():
     """ test fixture for a complete session (all test files)"""
 
+    # Create the one and only qutest_context used through the session
     context = qutest_context()
+
+    # Do the context setup
     context.session_setup()
 
-    # Return context to subfixtures to pass along to tests
+    # Yield context to subfixtures to pass along to tests
     yield context
 
-    # Clean up
+    # Do the context teardown
     context.session_teardown()
+
 
 @pytest.fixture()
 def qutest(qutest_session):
-    """ test fixture for each test function, does a target reset by default """
+    """ Default test fixture for each test function.
+    
+    This will reset the target before each test unless
+    the RESET_TARGET_ON_SETUP is set to False
+    """
 
-    qutest_session.reset_target()
+    if CONFIG.RESET_TARGET_ON_SETUP:
+        qutest_session.reset_target()
 
     return qutest_session
 
 @pytest.fixture()
 def qutest_noreset(qutest_session):
-    """ test fixture for each test function that does NOT reset the target """
+    """ Test fixture for each test function that does NOT reset the target. """
 
     return qutest_session
 
@@ -68,6 +77,8 @@ class qutest_context():
 
 
     def session_setup(self):
+        """ Setup that should run on once per session. """
+
         # Automatically run qspy backend
         if CONFIG.AUTOSTART_QSPY_HOST:
             self.start_qspy()
@@ -81,6 +92,8 @@ class qutest_context():
 
 
     def session_teardown(self):
+        """ Teardown that runs at the end of a session. """
+
         self.qspy.detach()
 
         if CONFIG.AUTOSTART_QSPY_HOST:
@@ -91,6 +104,8 @@ class qutest_context():
             self.stop_target()
 
     def start_qspy(self):
+        """ Helper to automatically start qspy. """
+
         # Start qspy
         self.qspy_process = Popen(
             ['qspy', '-u', CONFIG.QSPY_TARGET_PORT], creationflags=CREATE_NEW_CONSOLE)
@@ -99,22 +114,29 @@ class qutest_context():
 
 
     def stop_qspy(self):
+        """ Helper to stop qspy. """
+
         self.qspy_process.terminate()
         self.qspy_process.wait()
         self.qspy_process = None
     
     
     def start_target(self):
+        """ Used to start a local target executable for dual targeting. """
+
         self.target_process = Popen(
             [CONFIG.TARGET_EXECUTABLE, CONFIG.TARGET_HOST_NAME], creationflags=CREATE_NEW_CONSOLE)
         time.sleep(1.0)
 
     def stop_target(self):
+        """ Stops local target. """
+
         self.target_process.terminate()
         self.target_process.wait()
         self.target_process = None
 
     def reset_target(self):
+        """ Resets the target (local or remote). """
 
         # Clear have target flag
         self.have_target_event.clear()
@@ -139,27 +161,34 @@ class qutest_context():
             on_reset_method(self)
 
     def Continue(self):
-        """ Sends a continue to a paused target """
+        """ Sends a continue to a paused target. """
 
         self.qspy.sendContinue()
         self.expect('           Trg-Ack  QS_RX_TEST_CONTINUE')
 
 
     def expect_pause(self):
+        """ Pause expectation. """
+
         self.expect('           TstPause')
 
 
     def glb_filter(self, *args):
+        """ Sets the global filter.
+
+        Args:
+            args : One or more qspy.FILTER enumerations
+        """
         self.qspy.sendGlobalFilters(*args)
         self.expect('           Trg-Ack  QS_RX_GLB_FILTER')
 
 
     def loc_filter(self, object_kind, object_id):
-        """ Sets a local filter
+        """ Sets a local filter.
 
-        Arguments:
-        object_kind -- kind of object from QS_OBJ_KIND
-        object_id -- the object which can be an address integer or a dictionary name string
+        Args:
+          object_kind : kind of object from qspy.QS_OBJ_KIND
+          object_id : the object which can be an address integer or a dictionary name string
         """
 
         self.qspy.sendLocalFilter(object_kind, object_id)
@@ -167,31 +196,79 @@ class qutest_context():
 
 
     def current_obj(self, object_kind, object_id):
+        """ Sets the current object in qspy.
+
+        Arguments:
+        object_kind : kind of object from qspy.QS_OBJ_KIND
+        object_id : the object which can be an address integer or a dictionary name string
+        """
+
         self.qspy.sendCurrentObject(object_kind, object_id)
         self.expect('           Trg-Ack  QS_RX_CURR_OBJ')
 
 
     def post(self, signal, parameters = None):
+        """ Posts an event to the object selected with current_obj().
+
+        Args:
+          signal : signal string or number
+          parameters : optional event payload defined using struct.pack
+        """
+
         self.qspy.sendEvent(PRIO_COMMAND.POST.value,  signal, parameters)
         self.expect('           Trg-Ack  QS_RX_EVENT')
 
 
     def publish(self, signal, parameters = None):
+        """ Publishes an event in the system.
+
+        Args:
+          signal : signal string or number
+          parameters : optional event payload defined using struct.pack
+        """
+
         self.qspy.sendEvent(PRIO_COMMAND.PUBLISH,  signal, parameters)
         self.expect('           Trg-Ack  QS_RX_EVENT')
 
 
     def dispatch(self, signal, parameters = None):
+        """ Dispatches an event to the object selected with current_obj().
+
+        Args:
+          signal : signal string or number
+          parameters : optional event payload defined using struct.pack
+        """
+
         self.qspy.sendEvent(PRIO_COMMAND.DISPATCH.value,  signal, parameters)
         self.expect('           Trg-Ack  QS_RX_EVENT')
 
 
-    def probe(self, function, data):
+    def probe(self, function, data_word):
+        """ Sends a test probe to the target.
+
+        The Target collects these Test-Probe preserving the order in which they were sent.
+        Subsequently, whenever a given API is called inside the Target, it can
+        obtain the Test-Probe by means of the QS_TEST_PROBE_DEF() macro.
+        The QS_TEST_PROBE_DEF() macro returns the Test-Probes in the same
+        order as they were received to the Target. If there are no more Test-
+        Probes for a given API, the Test-Probe is initialized to zero.
+
+        Args:
+          function : string function name or integer raw address
+          data_word : a single uint 32 for the probe   
+        """
+
         self.qspy.sendTestProbe(function, data)
         self.expect('           Trg-Ack  QS_RX_TEST_PROBE')
 
 
     def tick(self, rate = 0):
+        """ Triggers a system clock tick.
+
+        Args:
+          rate : (optional) which clock rate to tick
+        """
+
         self.qspy.sendTick(rate)
         self.expect('           Trg-Ack  QS_RX_TICK')
 

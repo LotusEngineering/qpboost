@@ -20,20 +20,36 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# This file is the configuraton parameters for qutest
+#
+# This file is the configuraton parameters for qutest, can be modifed here or 
+# via another test start script
+#
 
-USE_HOST_TARGET = False
+# Set to true to launch and connect to a local target 
+USE_HOST_TARGET = True
+
+# Set to true have QSpy automatically start at the beginning of a test session, qspy must be on system path
 AUTOSTART_QSPY_HOST = True
 
 if USE_HOST_TARGET:
+    # Local targets communicate to qpsy via a TCP socket instead of a serial port
     QSPY_TARGET_PORT = '-t'
-    TARGET_EXECUTABLE = 'test_dpp'         # Set this to the target executible name (e.g. test_dpp), target must be on system path 
-    TARGET_HOST_NAME = 'localhost'          # Set to the IP address of TARGET_EXECUTABLE
+
+    # Set this to the target executible name (e.g. test_dpp), target must be on system path 
+    TARGET_EXECUTABLE = 'test_dpp'  
+    
+    # Set to the IP address of where the QSpy resides, 
+    TARGET_HOST_NAME = 'localhost'          
 else:
+    # Serial port that target is connected to for qspy
+    # MODIFY FOR YOUR REMOTE TARGET
     QSPY_TARGET_PORT = '-cCOM3'
 
+# How long we wait for the target to come up and send the target info record
+TARGET_START_TIMEOUT_SEC = 1.000       
 
-TARGET_START_TIMEOUT_SEC = 1.000       # How long we wait for the target to come up and send the target info record
+# How long to wait for expect calls to return (was TIMEOUT_MS in qutest.tcl)
 EXPECT_TIMEOUT_SEC = 0.800
 
-RESET_TARGET_ON_SETUP = True    # Reset the target on every test setUp call
+# Reset the target on every test setUp call that uses the qutest fixture
+RESET_TARGET_ON_SETUP = True    

@@ -20,9 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
-import config # This is just needed because qutest is in parent directory
-from  qutest import FILTER, QS_OBJ_KIND, qutest, qutest_noreset, qutest_session
+from qspypy.qspy import FILTER, QS_OBJ_KIND
+from  qspypy.qutest import qutest, qutest_noreset, qutest_session
 import time
 import pytest
 import sys
@@ -30,6 +29,8 @@ import struct
 
 @pytest.fixture
 def on_reset(qutest):
+    """ Additional test fixture that we want to run before each test """
+
     qutest.expect_pause()
     qutest.Continue()  # note continue in lower case. is a reserved word in python
     qutest.glb_filter(FILTER.SM, FILTER.AO, FILTER.UA)
