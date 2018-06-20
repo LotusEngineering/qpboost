@@ -21,12 +21,18 @@
 # SOFTWARE.
 # preamble...
 
-import config # This is just needed because qutest is in parent directory
-from  qutest import FILTER, QS_OBJ_KIND, qutest, qutest_noreset, qutest_session
-import time
-import pytest
+#
+# This file is an example rewrite of test_table.tcl using qspypy
+#
+
+# The following 2 imports are only needed from if running this file from a source distributon
 import sys
+import config 
+
+import pytest
 import struct
+from qspypy.qspy import FILTER, QS_OBJ_KIND
+from qspypy.qutest import qutest, qutest_noreset, qutest_session
 
 
 @pytest.fixture

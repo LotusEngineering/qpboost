@@ -20,12 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from qspypy.qspy import FILTER, QS_OBJ_KIND
-from  qspypy.qutest import qutest, qutest_noreset, qutest_session
-import time
-import pytest
+#
+# This file is an example rewrite of test_philo.tcl using qspypy
+#
+
+# The following 2 imports are only needed from if running this file from a source distributon
 import sys
+import config 
+
+import pytest
 import struct
+from qspypy.qspy import FILTER, QS_OBJ_KIND
+from qspypy.qutest import qutest, qutest_noreset, qutest_session
+
 
 @pytest.fixture
 def on_reset(qutest):
@@ -106,6 +113,8 @@ def test_timeEvt_Philo_tick(qutest, on_reset):
 
 
 if __name__ == "__main__":
+
+    # stop on first failure, verbose output but small stack trace
     options = ['-x', '-v', '--tb=short']
     options.extend(sys.argv)
     pytest.main(options)

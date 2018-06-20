@@ -20,3 +20,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import setuptools
+
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="qspypy",
+    version="0.0.2",
+    author="Dominic Valentino",
+    author_email="dominic_valentino@lotusengineeringllc.com",
+    description="Python implementation of qspy Tcl scripts",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/LotusEngineering/qp-plus/qspypy",
+    packages=['qspypy'],
+    classifiers=(
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ),
+    keywords = 'qp qpcpp qtools qpc qutest',
+    install_requires = ['pytest']
+)

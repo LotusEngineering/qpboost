@@ -20,10 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+#
+# Some basic tests for qpsy class, NOT TO BE TAKEN AS A GOOD EXAMPLE OF USE!
+#
+
 import config
 import unittest
 from subprocess import Popen, CREATE_NEW_CONSOLE
-from qspy import qspy, QS_CHANNEL, QS_OBJ_KIND, FILTER
+from qspypy.qspy import qspy, QS_CHANNEL, QS_OBJ_KIND, FILTER
 import time
 import struct
 
@@ -107,30 +111,22 @@ class test_qspy(unittest.TestCase):
         print("OnRecord_QS_OBJ_DICT callback:", data)
 
 
-    #@unittest.skip("")
     def test_sendCommand(self):
         self.cut.sendCommand(0) #pause
         self.cut.sendCommand(1) #resume
 
-    @unittest.skip("")
+    #@unittest.skip("")
     def test_sendLocalFilter(self):
         self.cut.sendLocalFilter(QS_OBJ_KIND.SM_AO, "l_philo<2>")
 
-    @unittest.skip("")
+    #@unittest.skip("")
     def test_sendCurrentObject(self):
         self.cut.sendCurrentObject(QS_OBJ_KIND.SM_AO, "l_philo<2>")
 
     def test_sendEvent(self):
         self.cut.sendGlobalFilters(FILTER.SM, FILTER.AO, FILTER.UA)        
         self.cut.sendCurrentObject(QS_OBJ_KIND.SM_AO, "l_philo<2>")
-        #self.cut.sendLocalFilter(QS_OBJ_KIND.SM_AO, "l_philo<2>")
-        
-        #signal = 'EAT_SIG'
-        #parameters = struct.pack('B', 2)
-        #self.cut.sendEvent(ao_priority, signal, parameters)
-
         self.cut.sendEvent(ao_priority = 3, signal = "TIMEOUT_SIG")
-        pass
 
         
 if __name__ == "__main__":

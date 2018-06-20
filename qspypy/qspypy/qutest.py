@@ -21,12 +21,13 @@
 # SOFTWARE.
 
 import pytest
-from subprocess import Popen, CREATE_NEW_CONSOLE
-from qspy import qspy, QS_CHANNEL, QS_OBJ_KIND, FILTER, PRIO_COMMAND
 import time
-import config as CONFIG
 from threading import Event
 from queue import Queue
+from subprocess import Popen, CREATE_NEW_CONSOLE
+
+from qspypy.qspy import qspy, QS_CHANNEL, QS_OBJ_KIND, FILTER, PRIO_COMMAND
+import qspypy.config as CONFIG
 
 
 
@@ -258,7 +259,7 @@ class qutest_context():
           data_word : a single uint 32 for the probe   
         """
 
-        self.qspy.sendTestProbe(function, data)
+        self.qspy.sendTestProbe(function, data_word)
         self.expect('           Trg-Ack  QS_RX_TEST_PROBE')
 
 
