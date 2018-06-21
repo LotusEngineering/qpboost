@@ -24,10 +24,7 @@
 # This file is an example rewrite of test_philo.tcl using qspypy
 #
 
-# The following 2 imports are only needed from if running this file from a source distributon
 import sys
-import config 
-
 import pytest
 import struct
 from qspypy.qspy import FILTER, QS_OBJ_KIND

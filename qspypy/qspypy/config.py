@@ -25,25 +25,30 @@
 # via another test start script
 #
 
+
+#### QSpy settings  ####
+# Serial port that target is connected to for qspy, used when AUTO_START_QSPY is true
+# MODIFY FOR YOUR REMOTE TARGET
+QSPY_COM_PORT = 'COM3'
+
+# Set to true have QSpy automatically start/stop at the beginning/end of a test session, qspy must be on system path
+AUTOSTART_QSPY = True
+
+
+###### Local host settings ######
+
 # Set to true to launch and connect to a local target 
-USE_HOST_TARGET = True
+USE_LOCAL_TARGET = False
 
-# Set to true have QSpy automatically start at the beginning of a test session, qspy must be on system path
-AUTOSTART_QSPY_HOST = True
+# Set to the IP address of where the QSpy resides (normally the local host) 
+LOCAL_TARGET_QSPY_HOST = 'localhost'          
 
-if USE_HOST_TARGET:
-    # Local targets communicate to qpsy via a TCP socket instead of a serial port
-    QSPY_TARGET_PORT = '-t'
+# Set this to the target executible name (e.g. test_dpp), target must be on system path 
+LOCAL_TARGET_EXECUTABLE = 'test_dpp'  
 
-    # Set this to the target executible name (e.g. test_dpp), target must be on system path 
-    TARGET_EXECUTABLE = 'test_dpp'  
     
-    # Set to the IP address of where the QSpy resides, 
-    TARGET_HOST_NAME = 'localhost'          
-else:
-    # Serial port that target is connected to for qspy
-    # MODIFY FOR YOUR REMOTE TARGET
-    QSPY_TARGET_PORT = '-cCOM3'
+
+###### Misc. settings ##########
 
 # How long we wait for the target to come up and send the target info record
 TARGET_START_TIMEOUT_SEC = 1.000       

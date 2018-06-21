@@ -500,6 +500,7 @@ class qspy(threading.Thread):
 
         self.tx_packet_seq += 1
         self.tx_packet_seq &= 0xFF
+        # print("Qspy tx seq >>", self.tx_packet_seq)
 
 
     @staticmethod

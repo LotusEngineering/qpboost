@@ -20,22 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
-import sys
+#
+# pytest configuration file
+#
+import pytest
+import qspypy.config as CONFIG
 
-# Append the top level directory to the system path since python doesn't allow a relative imports there
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+## Change this to be the port your target is connected to
+CONFIG.QSPY_COM_PORT = 'COM3'
 
+# Here is an example of configuring pytest to run a local host (by default his used the -t qspy port)
+CONFIG.USE_LOCAL_TARGET = False
+CONFIG.LOCAL_TARGET_EXECUTABLE = 'test_dpp'
 
-# Set to true to have test suite launch dpp test application on host, false to run over serial port
-# You must have the dpp_test executible on your path if you set this to true
-USE_LOCAL_DPP_TEST = True
-
-if USE_LOCAL_DPP_TEST: 
-    QSPY_TARGET_PORT = '-t' 
-    DPP_HOST_NAME = 'localhost' # Change to remote IP if dpp runs on another PC
-else:
-    # Change to port that qspy connects to the physciall target with, e.g.:  -cCOM3, -c/dev/ttyO4
-    QSPY_TARGET_PORT = '-cCOM3'
-    
 

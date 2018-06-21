@@ -25,10 +25,7 @@
 # This file is an example rewrite of test_table.tcl using qspypy
 #
 
-# The following 2 imports are only needed from if running this file from a source distributon
 import sys
-import config 
-
 import pytest
 import struct
 from qspypy.qspy import FILTER, QS_OBJ_KIND
@@ -66,6 +63,6 @@ def test_SERVE_Table_2(qutest_noreset):
     qutest.expect("%timestamp =ASSERT= Mod=bsp,Loc=100")
 
 if __name__ == "__main__":
-    options = ['-x', '-v']#, '--tb=short']
+    options = ['-x', '-v', '--tb=short']
     options.extend(sys.argv)
     pytest.main(options)
