@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 #
-# This file is the configuraton parameters for qutest, can be modifed here or 
+# This file is the configuraton parameters for qutest, can be modifed here or
 # via another test start script
 #
 
@@ -37,24 +37,25 @@ AUTOSTART_QSPY = True
 
 ###### Local host settings ######
 
-# Set to true to launch and connect to a local target 
+# Set to true to launch and connect to a local target
 USE_LOCAL_TARGET = False
 
-# Set to the IP address of where the QSpy resides (normally the local host) 
-LOCAL_TARGET_QSPY_HOST = 'localhost'          
+# Set to the IP address of where the QSpy resides (normally the local host)
+LOCAL_TARGET_QSPY_HOST = 'localhost'
 
-# Set this to the target executible name (e.g. test_dpp), target must be on system path 
-LOCAL_TARGET_EXECUTABLE = 'test_dpp'  
+# Set this to the target executible name (e.g. test_dpp), target must be on system path
+LOCAL_TARGET_EXECUTABLE = 'test_dpp'
 
-    
 
 ###### Misc. settings ##########
-
-# How long we wait for the target to come up and send the target info record
-TARGET_START_TIMEOUT_SEC = 1.000       
-
 # How long to wait for expect calls to return (was TIMEOUT_MS in qutest.tcl)
-EXPECT_TIMEOUT_SEC = 0.800
+EXPECT_TIMEOUT_SEC = 0.500
 
 # Reset the target on every test setUp call that uses the qutest fixture
-RESET_TARGET_ON_SETUP = True    
+RESET_TARGET_ON_SETUP = True
+
+# How long we wait for the target to come up and send the target info record
+TARGET_START_TIMEOUT_SEC = 1.000
+
+# How long we wait for the QSPY to come up
+QSPY_ATTACH_TIMEOUT_SEC = 1.0

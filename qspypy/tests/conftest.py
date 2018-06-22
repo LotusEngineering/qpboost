@@ -23,13 +23,18 @@
 #
 # pytest configuration file
 #
-import pytest
+
+# Load default configuration so we can change it before running
 import qspypy.config as CONFIG
 
-## Change this to be the port your target is connected to
+# Load common fixtures used throughout testing
+from qspypy.fixtures import qutest_session, qutest, qutest_noreset
+
+## NOTE: You must change this to be the port your target is connected to
 CONFIG.QSPY_COM_PORT = 'COM3'
 
-# Here is an example of configuring pytest to run a local host (by default his used the -t qspy port)
+# IF you want to run a local target, uncomment the following lines and
+# change the executable name to match (executable must be on your path)
 CONFIG.USE_LOCAL_TARGET = False
 CONFIG.LOCAL_TARGET_EXECUTABLE = 'test_dpp'
 

@@ -1,7 +1,9 @@
 # qpboost
-This project is a collection of open source extensions to the Quantum Leaps software and tools.
+This project is a collection of open source extensions to the Quantum Leaps 
+software and tools.
 
-The code in this project dependent upon existing code available from: https://www.state-machine.com.
+The code in this project dependent upon existing code available 
+from: https://www.state-machine.com.
 
 ## qspypy
 

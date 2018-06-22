@@ -30,56 +30,15 @@ from qspypy.qspy import qspy, QS_CHANNEL, QS_OBJ_KIND, FILTER, PRIO_COMMAND
 import qspypy.config as CONFIG
 
 
-
-@pytest.fixture(scope='session', autouse=True)
-def qutest_session2():
-    """ test fixture for a complete session (all test files)"""
-
-    # Create the one and only qutest_context used through the session
-    context = qutest_context()
-
-    print("@@@@@@ context", context)
-
-    # Do the context setup
-    context.session_setup()
-
-    # Yield context to subfixtures to pass along to tests
-    yield context
-
-    # Do the context teardown
-    context.session_teardown()
-
-
-@pytest.fixture()
-def qutest(qutest_session):
-    """ Default test fixture for each test function.
-    
-    This will reset the target before each test unless
-    the RESET_TARGET_ON_SETUP is set to False
-    """
-
-    if CONFIG.RESET_TARGET_ON_SETUP:
-        qutest_session.reset_target()
-
-    return qutest_session
-
-@pytest.fixture()
-def qutest_noreset(qutest_session):
-    """ Test fixture for each test function that does NOT reset the target. """
-
-    return qutest_session
-
 class qutest_context():
     """ This class provides the main pytest based context."""
 
- 
     def __init__(self):
         self.qspy_process = None
         self.target_process = None
         self.attached_event = Event()
         self.have_target_event = Event()
-        self.text_queue = Queue(maxsize = 0)
-
+        self.text_queue = Queue(maxsize=0)
 
     def session_setup(self):
         """ Setup that should run on once per session. """
@@ -87,24 +46,26 @@ class qutest_context():
         # Automatically run qspy backend
         if CONFIG.AUTOSTART_QSPY:
             self.start_qspy()
+            # qspy will not listend for the attach immediately
+            time.sleep(CONFIG.QSPY_ATTACH_TIMEOUT_SEC)
 
-        # Create qspy object and attach
         self.qspy = qspy()
+
         self.attached_event.clear()
         self.qspy.attach(self)
         # Wait for attach
-        if not self.attached_event.wait(CONFIG.TARGET_START_TIMEOUT_SEC):
+        if not self.attached_event.wait(CONFIG.QSPY_ATTACH_TIMEOUT_SEC):
             __tracebackhide__ = True
-            pytest.fail("Timeout waiting for Attach to QSpy (is QSpy running and QSPY_COM_PORT correct?)")
-
+            pytest.fail(
+                "Timeout waiting for Attach to QSpy (is QSpy running and QSPY_COM_PORT correct?)")
 
     def session_teardown(self):
         """ Teardown that runs at the end of a session. """
 
         self.qspy.detach()
 
-        #if CONFIG.AUTOSTART_QSPY:
-        #   self.stop_qspy()
+        if CONFIG.AUTOSTART_QSPY:
+            self.stop_qspy()
 
         # Stop target executable
         if CONFIG.USE_LOCAL_TARGET:
@@ -123,30 +84,26 @@ class qutest_context():
         self.qspy_process = Popen(
             ['qspy', '-u', target_port], creationflags=CREATE_NEW_CONSOLE)
 
-        time.sleep(1.0) # qspy doesn't appear to have it's ears on immediately
-
-
     def stop_qspy(self):
         """ Helper to stop qspy. """
+        if self.qspy_process is not None:
+            self.qspy_process.terminate()
+            self.qspy_process.wait()
+            self.qspy_process = None
 
-        self.qspy_process.terminate()
-        self.qspy_process.wait()
-        self.qspy_process = None
-    
-    
     def start_target(self):
         """ Used to start a local target executable for dual targeting. """
 
         self.target_process = Popen(
             [CONFIG.LOCAL_TARGET_EXECUTABLE, CONFIG.LOCAL_TARGET_QSPY_HOST], creationflags=CREATE_NEW_CONSOLE)
-        time.sleep(1.0)
+        assert self.target_process is not None, "Problem starting target, make sure path is correct"
 
     def stop_target(self):
         """ Stops local target. """
-
-        self.target_process.terminate()
-        self.target_process.wait()
-        self.target_process = None
+        if self.target_process is not None:
+            self.target_process.terminate()
+            self.target_process.wait()
+            self.target_process = None
 
     def reset_target(self):
         """ Resets the target (local or remote). """
@@ -154,23 +111,24 @@ class qutest_context():
         # Clear have target flag
         self.have_target_event.clear()
 
-        # Flush queue
+        # Flush queue in case they miss an expect
         while not self.text_queue.empty():
-            print("Flush:", self.text_queue.get())
+            print("Flushing Text:", self.text_queue.get())
 
         # If running with a local target, kill and restart it
-        if CONFIG.USE_LOCAL_TARGET:        
+        if CONFIG.USE_LOCAL_TARGET:
             if self.target_process is not None:
                 self.qspy.sendReset()
                 # Let the target executable finish
                 time.sleep(CONFIG.TARGET_START_TIMEOUT_SEC)
                 self.stop_target()
             self.start_target()
-        else: 
+        else:
             self.qspy.sendReset()
 
         # Wait for target to be back up
-        assert self.have_target_event.wait(CONFIG.TARGET_START_TIMEOUT_SEC), "Timeout waiting for target to reset"
+        assert self.have_target_event.wait(
+            CONFIG.TARGET_START_TIMEOUT_SEC), "Timeout waiting for target to reset"
 
         # Call on_reset if defined
         if hasattr(self, "on_reset"):
@@ -183,12 +141,10 @@ class qutest_context():
         self.qspy.sendContinue()
         self.expect('           Trg-Ack  QS_RX_TEST_CONTINUE')
 
-
     def expect_pause(self):
         """ Pause expectation. """
 
         self.expect('           TstPause')
-
 
     def glb_filter(self, *args):
         """ Sets the global filter.
@@ -198,7 +154,6 @@ class qutest_context():
         """
         self.qspy.sendGlobalFilters(*args)
         self.expect('           Trg-Ack  QS_RX_GLB_FILTER')
-
 
     def loc_filter(self, object_kind, object_id):
         """ Sets a local filter.
@@ -211,7 +166,6 @@ class qutest_context():
         self.qspy.sendLocalFilter(object_kind, object_id)
         self.expect('           Trg-Ack  QS_RX_LOC_FILTER')
 
-
     def current_obj(self, object_kind, object_id):
         """ Sets the current object in qspy.
 
@@ -223,8 +177,7 @@ class qutest_context():
         self.qspy.sendCurrentObject(object_kind, object_id)
         self.expect('           Trg-Ack  QS_RX_CURR_OBJ')
 
-
-    def post(self, signal, parameters = None):
+    def post(self, signal, parameters=None):
         """ Posts an event to the object selected with current_obj().
 
         Args:
@@ -235,8 +188,7 @@ class qutest_context():
         self.qspy.sendEvent(PRIO_COMMAND.POST.value,  signal, parameters)
         self.expect('           Trg-Ack  QS_RX_EVENT')
 
-
-    def publish(self, signal, parameters = None):
+    def publish(self, signal, parameters=None):
         """ Publishes an event in the system.
 
         Args:
@@ -247,8 +199,7 @@ class qutest_context():
         self.qspy.sendEvent(PRIO_COMMAND.PUBLISH,  signal, parameters)
         self.expect('           Trg-Ack  QS_RX_EVENT')
 
-
-    def dispatch(self, signal, parameters = None):
+    def dispatch(self, signal, parameters=None):
         """ Dispatches an event to the object selected with current_obj().
 
         Args:
@@ -259,6 +210,11 @@ class qutest_context():
         self.qspy.sendEvent(PRIO_COMMAND.DISPATCH.value,  signal, parameters)
         self.expect('           Trg-Ack  QS_RX_EVENT')
 
+    def init(self, signal=0, parameter=None):
+        """ Take the top-most initial transition in the current object"""
+
+        self.qspy.sendEvent(PRIO_COMMAND.DO_INIT_TRANS, signal, parameter)
+        self.expect('           Trg-Ack  QS_RX_EVENT')
 
     def probe(self, function, data_word):
         """ Sends a test probe to the target.
@@ -278,8 +234,7 @@ class qutest_context():
         self.qspy.sendTestProbe(function, data_word)
         self.expect('           Trg-Ack  QS_RX_TEST_PROBE')
 
-
-    def tick(self, rate = 0):
+    def tick(self, rate=0):
         """ Triggers a system clock tick.
 
         Args:
@@ -289,8 +244,7 @@ class qutest_context():
         self.qspy.sendTick(rate)
         self.expect('           Trg-Ack  QS_RX_TICK')
 
-
-    def command(self, command_id, param1 = 0, param2 = 0, param3 = 0):
+    def command(self, command_id, param1=0, param2=0, param3=0):
         """ Sends a qspy command to the target.
 
         Args:
@@ -303,7 +257,6 @@ class qutest_context():
         self.qspy.sendCommand(command_id, param1, param2, param3)
         self.expect('           Trg-Ack  QS_RX_COMMAND')
 
-
     def expect(self, match):
         """ asserts that match string is sent by the cut
 
@@ -315,10 +268,9 @@ class qutest_context():
                   postpended with * to ignore ending
         """
 
-
-
         try:
-            next_packet = self.text_queue.get(timeout=CONFIG.EXPECT_TIMEOUT_SEC)
+            next_packet = self.text_queue.get(
+                timeout=CONFIG.EXPECT_TIMEOUT_SEC)
         except:
             __tracebackhide__ = True
             pytest.fail('Expect Timeout for match:"{0}"'.format(match))
@@ -327,9 +279,9 @@ class qutest_context():
         _, line = qspy.parse_QS_TEXT(next_packet)
 
         magic_string = '%timestamp'
-        
+
         if match.startswith(magic_string):
-            line_start = len(magic_string) 
+            line_start = len(magic_string)
         else:
             line_start = 0
 
@@ -339,15 +291,16 @@ class qutest_context():
         else:
             line_end = len(match)
 
-        expected = match[line_start:] 
+        expected = match[line_start:]
         actual = line[line_start:line_end]
         #assert expected == actual, 'Expect Match Failed! \nExpected:\"{0}\"\nReceived:\"{1}\"'.format(expected, actual)
         if expected != actual:
             __tracebackhide__ = True
-            pytest.fail('Expect Match Failed! \nExpected:\"{0}\"\nReceived:\"{1}\"'.format(expected, actual))
-    
+            pytest.fail('Expect Match Failed! \nExpected:\"{0}\"\nReceived:\"{1}\"'.format(
+                expected, actual))
+
     ################### qspy backend callbacks #######################
-    
+
     def OnRecord_QS_TARGET_INFO(self, packet):
         self.have_target_event.set()
 
@@ -359,7 +312,3 @@ class qutest_context():
         self.text_queue.put(record)
         #recordId, line = self.qspy.parse_QS_TEXT(record)
         #print('OnRecord_QS_TEXT record:{0}, line:"{1}"'.format(recordId.name, line) )
-
-
-
-

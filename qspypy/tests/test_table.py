@@ -23,44 +23,57 @@
 
 #
 # This file is an example rewrite of test_table.tcl using qspypy
+# NOTE: This script is compatible with the qutest DPP example in qpcpp 6.3.2
 #
 
 import sys
 import pytest
 import struct
 from qspypy.qspy import FILTER, QS_OBJ_KIND
-from qspypy.qutest import qutest, qutest_noreset, qutest_session
 
 
 @pytest.fixture
 def on_reset(qutest):
+    """ Common fixture to handle reset """
+    
     qutest.expect_pause()
     qutest.Continue()  # note continue in lower case. is a reserved word in python
-    qutest.glb_filter(FILTER.SM, FILTER.AO)
-    qutest.loc_filter(QS_OBJ_KIND.AO, 'l_table')
-    qutest.current_obj(QS_OBJ_KIND.SM_AO, 'l_table')
+    qutest.glb_filter(FILTER.SM, FILTER.AO, FILTER.UA)
+    qutest.loc_filter(QS_OBJ_KIND.AO, 'AO_Table')
+    qutest.current_obj(QS_OBJ_KIND.SM_AO, 'AO_Table')
 
 # tests...
+
+
 def test_PAUSE_Table(qutest, on_reset):
     qutest.dispatch('PAUSE_SIG')
-    qutest.expect("%timestamp Disp===> Obj=l_table,Sig=PAUSE_SIG,State=Table::serving")
-    qutest.expect("===RTC===> St-Entry Obj=l_table,State=Table::paused")
-    qutest.expect("%timestamp ===>Tran Obj=l_table,Sig=PAUSE_SIG,State=Table::serving->Table::paused")
+    qutest.expect(
+        "%timestamp Disp===> Obj=AO_Table,Sig=PAUSE_SIG,State=serving")
+    qutest.expect("%timestamp BSP_CALL BSP::displayPaused 1")
+    qutest.expect("===RTC===> St-Entry Obj=AO_Table,State=paused")
+    qutest.expect(
+        "%timestamp ===>Tran Obj=AO_Table,Sig=PAUSE_SIG,State=serving->paused")
     qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
+
 
 def test_SERVE_Table_1(qutest, on_reset):
     qutest.command(1)
-    qutest.expect("%timestamp Disp===> Obj=l_table,Sig=SERVE_SIG,State=Table::serving")
-    qutest.expect("%timestamp =>Ignore Obj=l_table,Sig=SERVE_SIG,State=Table::serving")
+    qutest.expect(
+        "%timestamp Disp===> Obj=AO_Table,Sig=SERVE_SIG,State=serving")
+    qutest.expect(
+        "%timestamp =>Ignore Obj=AO_Table,Sig=SERVE_SIG,State=serving")
     qutest.expect("%timestamp Trg-Done QS_RX_COMMAND")
 
+
 def test_SERVE_Table_2(qutest_noreset):
-    qutest = qutest_noreset # name change
+    qutest = qutest_noreset  # name change
     qutest.probe('BSP::displayPaused', 1)
     qutest.dispatch('PAUSE_SIG')
-    qutest.expect("%timestamp Disp===> Obj=l_table,Sig=PAUSE_SIG,State=Table::serving")
+    qutest.expect(
+        "%timestamp Disp===> Obj=AO_Table,Sig=PAUSE_SIG,State=serving")
     qutest.expect("%timestamp TstProbe Fun=BSP::displayPaused,Data=1")
     qutest.expect("%timestamp =ASSERT= Mod=bsp,Loc=100")
+
 
 if __name__ == "__main__":
     options = ['-x', '-v', '--tb=short']

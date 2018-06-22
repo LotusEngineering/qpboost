@@ -20,26 +20,48 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import setuptools
+#
+# This module contains the test fixtures for pytest
+# These fixtures MUST be loaded in your conftest.py file to be used
+#
+import pytest
+from qspypy.qutest import qutest_context
+import qspypy.config as CONFIG
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
 
-setuptools.setup(
-    name="qspypy",
-    version="1.0",
-    author="Lotus Engineering, LLC",
-    author_email="dominic_valentino@lotusengineeringllc.com",
-    description="Python implementation of qspy Tcl scripts",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/LotusEngineering/qpboost/qspypy",
-    packages=['qspypy'],
-    classifiers=(
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ),
-    keywords = 'qp qpcpp qtools qpc qutest',
-    install_requires = ['pytest>=3.6.1']
-)
+@pytest.fixture(scope='session')
+def qutest_session():
+    """ test fixture for a complete session (all test files)"""
+
+    # Create the one and only qutest_context used through out the session
+    context = qutest_context()
+
+    # Do the context setup
+    context.session_setup()
+
+    # Yield context to subfixtures to pass along to tests
+    yield context
+
+    # Do the context teardown
+    context.session_teardown()
+
+
+@pytest.fixture()
+def qutest(qutest_session):
+    """ Default test fixture for each test function.
+
+    This will reset the target before each test unless
+    the RESET_TARGET_ON_SETUP is set to False
+    """
+
+    if CONFIG.RESET_TARGET_ON_SETUP:
+        qutest_session.reset_target()
+
+    return qutest_session
+
+
+@pytest.fixture()
+def qutest_noreset(qutest_session):
+    """ Test fixture for each test function that does NOT reset the target. """
+
+    return qutest_session

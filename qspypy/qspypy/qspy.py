@@ -64,108 +64,115 @@ class QS_RX(IntEnum):
     EVENT = 16
 
 # Records from client Must be kept in sync with qs_copy.h
-class QSpyRecords(IntEnum): 
-    #/* [0] QS session (not maskable) */
-    QS_TEXT = 0,              #QS_EMPTY = 0,             #/*!< QS record for cleanly starting a session */
 
-    #/* [1] SM records */
-    QS_QEP_STATE_ENTRY = 1,   #/*!< a state was entered */
-    QS_QEP_STATE_EXIT = 2,    #/*!< a state was exited */
-    QS_QEP_STATE_INIT = 3,    #/*!< an initial transition was taken in a state */
-    QS_QEP_INIT_TRAN = 4,     #/*!< the top-most initial transition was taken */
-    QS_QEP_INTERN_TRAN = 5,   #/*!< an internal transition was taken */
-    QS_QEP_TRAN = 6,          #/*!< a regular transition was taken */
-    QS_QEP_IGNORED = 7,       #/*!< an event was ignored (silently discarded) */
-    QS_QEP_DISPATCH = 8,      #/*!< an event was dispatched (begin of RTC step) */
-    QS_QEP_UNHANDLED = 9,     #/*!< an event was unhandled due to a guard */
 
-    #/* [10] AO records */
-    QS_QF_ACTIVE_DEFER = 10,   #/*!< AO deferred an event */
-    QS_QF_ACTIVE_RECALL = 11,  #/*!< AO recalled an event */
-    QS_QF_ACTIVE_SUBSCRIBE = 12, #/*!< an AO subscribed to an event */
-    QS_QF_ACTIVE_UNSUBSCRIBE = 13, #/*!< an AO unsubscribed to an event */
-    QS_QF_ACTIVE_POST_FIFO = 14, #/*!< an event was posted (FIFO) directly to AO */
-    QS_QF_ACTIVE_POST_LIFO = 15, #/*!< an event was posted (LIFO) directly to AO */
-    QS_QF_ACTIVE_GET = 16,     #/*!< AO got an event and its queue is not empty */
-    QS_QF_ACTIVE_GET_LAST = 17,#/*!< AO got an event and its queue is empty */
-    QS_QF_ACTIVE_RECALL_ATTEMPT = 18, #/*!< AO attempted to recall an event */
+class QSpyRecords(IntEnum):
+    # /* [0] QS session (not maskable) */
+    QS_TEXT = 0,  # QS_EMPTY = 0,             #/*!< QS record for cleanly starting a session */
 
-    #/* [19] EQ records */
-    QS_QF_EQUEUE_POST_FIFO = 19, #/*!< an event was posted (FIFO) to a raw queue */
-    QS_QF_EQUEUE_POST_LIFO = 20, #/*!< an event was posted (LIFO) to a raw queue */
-    QS_QF_EQUEUE_GET = 21,     #/*!< get an event and queue still not empty */
-    QS_QF_EQUEUE_GET_LAST = 22,#/*!< get the last event from the queue */
+    # /* [1] SM records */
+    QS_QEP_STATE_ENTRY = 1,  # /*!< a state was entered */
+    QS_QEP_STATE_EXIT = 2,  # /*!< a state was exited */
+    QS_QEP_STATE_INIT = 3,  # /*!< an initial transition was taken in a state */
+    QS_QEP_INIT_TRAN = 4,  # /*!< the top-most initial transition was taken */
+    QS_QEP_INTERN_TRAN = 5,  # /*!< an internal transition was taken */
+    QS_QEP_TRAN = 6,  # /*!< a regular transition was taken */
+    QS_QEP_IGNORED = 7,  # /*!< an event was ignored (silently discarded) */
+    QS_QEP_DISPATCH = 8,  # /*!< an event was dispatched (begin of RTC step) */
+    QS_QEP_UNHANDLED = 9,  # /*!< an event was unhandled due to a guard */
+
+    # /* [10] AO records */
+    QS_QF_ACTIVE_DEFER = 10,  # /*!< AO deferred an event */
+    QS_QF_ACTIVE_RECALL = 11,  # /*!< AO recalled an event */
+    QS_QF_ACTIVE_SUBSCRIBE = 12,  # /*!< an AO subscribed to an event */
+    QS_QF_ACTIVE_UNSUBSCRIBE = 13,  # /*!< an AO unsubscribed to an event */
+    # /*!< an event was posted (FIFO) directly to AO */
+    QS_QF_ACTIVE_POST_FIFO = 14,
+    # /*!< an event was posted (LIFO) directly to AO */
+    QS_QF_ACTIVE_POST_LIFO = 15,
+    QS_QF_ACTIVE_GET = 16,  # /*!< AO got an event and its queue is not empty */
+    QS_QF_ACTIVE_GET_LAST = 17,  # /*!< AO got an event and its queue is empty */
+    QS_QF_ACTIVE_RECALL_ATTEMPT = 18,  # /*!< AO attempted to recall an event */
+
+    # /* [19] EQ records */
+    # /*!< an event was posted (FIFO) to a raw queue */
+    QS_QF_EQUEUE_POST_FIFO = 19,
+    # /*!< an event was posted (LIFO) to a raw queue */
+    QS_QF_EQUEUE_POST_LIFO = 20,
+    QS_QF_EQUEUE_GET = 21,  # /*!< get an event and queue still not empty */
+    QS_QF_EQUEUE_GET_LAST = 22,  # /*!< get the last event from the queue */
 
     QS_QF_RESERVED2 = 23,
 
-    #/* [24] MP records */
-    QS_QF_MPOOL_GET = 24,      #/*!< a memory block was removed from memory pool */
-    QS_QF_MPOOL_PUT = 25,      #/*!< a memory block was returned to memory pool */
+    # /* [24] MP records */
+    QS_QF_MPOOL_GET = 24,  # /*!< a memory block was removed from memory pool */
+    QS_QF_MPOOL_PUT = 25,  # /*!< a memory block was returned to memory pool */
 
-    #/* [26] QF records */
-    QS_QF_PUBLISH = 26,        #/*!< an event was published */
-    QS_QF_NEW_REF = 27,        #/*!< new event reference was created */
-    QS_QF_NEW = 28,            #/*!< new event was created */
-    QS_QF_GC_ATTEMPT = 29,     #/*!< garbage collection attempt */
-    QS_QF_GC = 30,             #/*!< garbage collection */
-    QS_QF_TICK = 31,           #/*!< QF_tickX() was called */
+    # /* [26] QF records */
+    QS_QF_PUBLISH = 26,  # /*!< an event was published */
+    QS_QF_NEW_REF = 27,  # /*!< new event reference was created */
+    QS_QF_NEW = 28,  # /*!< new event was created */
+    QS_QF_GC_ATTEMPT = 29,  # /*!< garbage collection attempt */
+    QS_QF_GC = 30,  # /*!< garbage collection */
+    QS_QF_TICK = 31,  # /*!< QF_tickX() was called */
 
-    #/* [32] TE records */
-    QS_QF_TIMEEVT_ARM = 32,    #/*!< a time event was armed */
-    QS_QF_TIMEEVT_AUTO_DISARM = 33, #/*!< a time event expired and was disarmed */
-    QS_QF_TIMEEVT_DISARM_ATTEMPT = 34,#/*!< attempt to disarm a disarmed QTimeEvt */
-    QS_QF_TIMEEVT_DISARM = 35, #/*!< true disarming of an armed time event */
-    QS_QF_TIMEEVT_REARM = 36,  #/*!< rearming of a time event */
-    QS_QF_TIMEEVT_POST = 37,   #/*!< a time event posted itself directly to an AO */
+    # /* [32] TE records */
+    QS_QF_TIMEEVT_ARM = 32,  # /*!< a time event was armed */
+    QS_QF_TIMEEVT_AUTO_DISARM = 33,  # /*!< a time event expired and was disarmed */
+    # /*!< attempt to disarm a disarmed QTimeEvt */
+    QS_QF_TIMEEVT_DISARM_ATTEMPT = 34,
+    QS_QF_TIMEEVT_DISARM = 35,  # /*!< true disarming of an armed time event */
+    QS_QF_TIMEEVT_REARM = 36,  # /*!< rearming of a time event */
+    QS_QF_TIMEEVT_POST = 37,  # /*!< a time event posted itself directly to an AO */
 
-    #/* [38] QF records */
-    QS_QF_DELETE_REF = 38,     #/*!< an event reference is about to be deleted */
-    QS_QF_CRIT_ENTRY = 39,     #/*!< critical section was entered */
-    QS_QF_CRIT_EXIT = 40,      #/*!< critical section was exited */
-    QS_QF_ISR_ENTRY = 41,      #/*!< an ISR was entered */
-    QS_QF_ISR_EXIT = 42,       #/*!< an ISR was exited */
-    QS_QF_INT_DISABLE = 43,    #/*!< interrupts were disabled */
-    QS_QF_INT_ENABLE = 44,     #/*!< interrupts were enabled */
+    # /* [38] QF records */
+    QS_QF_DELETE_REF = 38,  # /*!< an event reference is about to be deleted */
+    QS_QF_CRIT_ENTRY = 39,  # /*!< critical section was entered */
+    QS_QF_CRIT_EXIT = 40,  # /*!< critical section was exited */
+    QS_QF_ISR_ENTRY = 41,  # /*!< an ISR was entered */
+    QS_QF_ISR_EXIT = 42,  # /*!< an ISR was exited */
+    QS_QF_INT_DISABLE = 43,  # /*!< interrupts were disabled */
+    QS_QF_INT_ENABLE = 44,  # /*!< interrupts were enabled */
 
-    #/* [45] AO records */
-    QS_QF_ACTIVE_POST_ATTEMPT = 45,#/*!< attempt to post an evt to AO failed */
+    # /* [45] AO records */
+    QS_QF_ACTIVE_POST_ATTEMPT = 45,  # /*!< attempt to post an evt to AO failed */
 
-    #/* [46] EQ records */
-    QS_QF_EQUEUE_POST_ATTEMPT = 46,#/*!< attempt to post an evt to QEQueue failed */
+    # /* [46] EQ records */
+    QS_QF_EQUEUE_POST_ATTEMPT = 46,  # /*!< attempt to post an evt to QEQueue failed */
 
-    #/* [47] MP records */
-    QS_QF_MPOOL_GET_ATTEMPT = 47,  #/*!< attempt to get a memory block failed */
+    # /* [47] MP records */
+    QS_QF_MPOOL_GET_ATTEMPT = 47,  # /*!< attempt to get a memory block failed */
 
-    #/* [48] SC records */
-    QS_MUTEX_LOCK = 48,        #/*!< a mutex was locked */
-    QS_MUTEX_UNLOCK = 49,      #/*!< a mutex was unlocked */
-    QS_SCHED_LOCK = 50,        #/*!< scheduler was locked */
-    QS_SCHED_UNLOCK = 51,      #/*!< scheduler was unlocked */
-    QS_SCHED_NEXT = 52,        #/*!< scheduler found next task to execute */
-    QS_SCHED_IDLE = 53,        #/*!< scheduler became idle */
-    QS_SCHED_RESUME = 54,      #/*!< scheduler resumed previous task (not idle) */
+    # /* [48] SC records */
+    QS_MUTEX_LOCK = 48,  # /*!< a mutex was locked */
+    QS_MUTEX_UNLOCK = 49,  # /*!< a mutex was unlocked */
+    QS_SCHED_LOCK = 50,  # /*!< scheduler was locked */
+    QS_SCHED_UNLOCK = 51,  # /*!< scheduler was unlocked */
+    QS_SCHED_NEXT = 52,  # /*!< scheduler found next task to execute */
+    QS_SCHED_IDLE = 53,  # /*!< scheduler became idle */
+    QS_SCHED_RESUME = 54,  # /*!< scheduler resumed previous task (not idle) */
 
-    #/* [55] QEP records */
-    QS_QEP_TRAN_HIST = 55,     #/*!< a tran to history was taken */
-    QS_QEP_TRAN_EP = 56,       #/*!< a tran to entry point into a submachine */
-    QS_QEP_TRAN_XP = 57,       #/*!< a tran to exit  point out of a submachine */
+    # /* [55] QEP records */
+    QS_QEP_TRAN_HIST = 55,  # /*!< a tran to history was taken */
+    QS_QEP_TRAN_EP = 56,  # /*!< a tran to entry point into a submachine */
+    QS_QEP_TRAN_XP = 57,  # /*!< a tran to exit  point out of a submachine */
 
-    #/* [58] Miscellaneous QS records (not maskable) */
-    QS_TEST_PAUSED = 58,       #/*!< test has been paused */
-    QS_TEST_PROBE_GET = 59,    #/*!< reports that Test-Probe has been used */
-    QS_SIG_DICT = 60,          #/*!< signal dictionary entry */
-    QS_OBJ_DICT = 61,          #/*!< object dictionary entry */
-    QS_FUN_DICT = 62,          #/*!< function dictionary entry */
-    QS_USR_DICT = 63,          #/*!< user QS record dictionary entry */
-    QS_TARGET_INFO = 64,       #/*!< reports the Target information */
-    QS_TARGET_DONE = 65,       #/*!< reports completion of a user callback */
-    QS_RX_STATUS = 66,         #/*!< reports QS data receive status */
+    # /* [58] Miscellaneous QS records (not maskable) */
+    QS_TEST_PAUSED = 58,  # /*!< test has been paused */
+    QS_TEST_PROBE_GET = 59,  # /*!< reports that Test-Probe has been used */
+    QS_SIG_DICT = 60,  # /*!< signal dictionary entry */
+    QS_OBJ_DICT = 61,  # /*!< object dictionary entry */
+    QS_FUN_DICT = 62,  # /*!< function dictionary entry */
+    QS_USR_DICT = 63,  # /*!< user QS record dictionary entry */
+    QS_TARGET_INFO = 64,  # /*!< reports the Target information */
+    QS_TARGET_DONE = 65,  # /*!< reports completion of a user callback */
+    QS_RX_STATUS = 66,  # /*!< reports QS data receive status */
     QS_MSC_RESERVED1 = 67,
-    QS_PEEK_DATA = 68,         #/*!< reports the data from the PEEK query */
-    QS_ASSERT_FAIL = 69,       #/*!< assertion failed in the code */
+    QS_PEEK_DATA = 68,  # /*!< reports the data from the PEEK query */
+    QS_ASSERT_FAIL = 69,  # /*!< assertion failed in the code */
 
-    #/* [70] Application-specific (User) QS records */
-    QS_USER = 70              #/*!< the first record available to QS users */
+    # /* [70] Application-specific (User) QS records */
+    QS_USER = 70  # /*!< the first record available to QS users */
 
 
 # Enumeration for channel type, this must match enum in "be.c"
@@ -175,15 +182,17 @@ class QS_CHANNEL(IntFlag):
 
 
 class QS_OBJ_KIND(IntEnum):
-    SM = 0, #State Machine
-    AO = 1, #Active Object
-    MP = 2, #Memory Pool
-    EQ = 3, #Event Queue
-    TE = 4, #Time Event 
-    AP = 5, #Application-Specific 
-    SM_AO = 6 #Active object and state machine
+    SM = 0,  # State Machine
+    AO = 1,  # Active Object
+    MP = 2,  # Memory Pool
+    EQ = 3,  # Event Queue
+    TE = 4,  # Time Event
+    AP = 5,  # Application-Specific
+    SM_AO = 6  # Active object and state machine
 
 #! QS record groups for filters
+
+
 class FILTER (IntEnum):
     ON = 1,   # all maskable QS records on
     OFF = 2,  # all maskable QS records on
@@ -213,16 +222,16 @@ theFmt = {
     'poolCtr': 'h',
     'poolBlk': 'h',
     'tevtCtr': 'h'
-    }
+}
 
 
 # Special priority values used to send commands
 class PRIO_COMMAND(IntEnum):
     PUBLISH = 0,         # Publish event
     DISPATCH = 255,      # dispatch event to the Current Object(SM)
-    DO_INIT_TRANS = 254, # take the top-most initial transition in the Current Object (SM)
+    # take the top-most initial transition in the Current Object (SM)
+    DO_INIT_TRANS = 254,
     POST = 253           # post event to the Current Object (AO)
-
 
 
 class qspy(threading.Thread):
@@ -236,8 +245,6 @@ class qspy(threading.Thread):
         self.rx_packet_errors = 0
         self.rx_record_seq = 0
         self.rx_record_errors = 0
-
-        
 
     def __del__(self):
         if self.socket is not None:
@@ -257,7 +264,7 @@ class qspy(threading.Thread):
                     if self.rx_record_seq != rx_sequence:
                         print("Rx Record sequence error!")
                         self.rx_record_errors += 1
-                        self.rx_record_seq = rx_sequence # resync          
+                        self.rx_record_seq = rx_sequence  # resync
                     self.rx_record_seq += 1
                     self.rx_record_seq &= 0xFF
                 else:
@@ -265,7 +272,7 @@ class qspy(threading.Thread):
                     if self.rx_packet_seq != rx_sequence:
                         print("Rx Packet sequence error!")
                         self.rx_packet_errors += 1
-                        self.rx_packet_seq = rx_sequence # resync
+                        self.rx_packet_seq = rx_sequence  # resync
                     self.rx_packet_seq += 1
                     self.rx_packet_seq &= 0xFF
 
@@ -277,7 +284,8 @@ class qspy(threading.Thread):
                     method(packet)
 
                 except AttributeError:
-                    raise NotImplementedError("Class `{}` does not implement `{}`".format(self.client.__class__.__name__, method_name))
+                    raise NotImplementedError("Class `{}` does not implement `{}`".format(
+                        self.client.__class__.__name__, method_name))
 
             except IOError as e:
                 # We expect this for now until we refactor the detach()
@@ -289,9 +297,9 @@ class qspy(threading.Thread):
     def parse_QS_TEXT(cls, packet):
         """ Returns a tuple of (record, line) of types QSpyRecords, string respectively
         """
-        assert  QSpyRecords(packet[1]) == QSpyRecords.QS_TEXT, "Wronge record type for parser" 
-        return (QSpyRecords(packet[2]), packet[3:].decode("utf-8") )          
-
+        assert QSpyRecords(
+            packet[1]) == QSpyRecords.QS_TEXT, "Wronge record type for parser"
+        return (QSpyRecords(packet[2]), packet[3:].decode("utf-8"))
 
     def attach(self, client, host='localhost', port=7701, channels=QS_CHANNEL.TEXT, local_port=None):
         """ Attach to the QSpy backend
@@ -332,11 +340,11 @@ class qspy(threading.Thread):
         self.socket = None
         self.client = None
         threading.Thread.join(self)
-    
+
     def sendAttach(self, channels):
         self.sendPacket(struct.pack(
             '< B B', QSPY.ATTACH.value, channels.value))
-    
+
     def sendLocalFilter(self, object_kind, object_id):
         """ Sends a local filter
 
@@ -348,12 +356,14 @@ class qspy(threading.Thread):
 
         format_string = '< B B ' + theFmt['objPtr']
 
-        if isinstance(object_id, int): 
+        if isinstance(object_id, int):
             # Send directly to Target
-            packet = struct.pack(format_string, QS_RX.LOC_FILTER, object_kind.value, object_id)
+            packet = struct.pack(
+                format_string, QS_RX.LOC_FILTER, object_kind.value, object_id)
         else:
             # Have QSpy interpret object_id string and send filter
-            packet = bytearray(struct.pack(format_string, QSPY.SEND_LOC_FILTER, object_kind.value, 0))
+            packet = bytearray(struct.pack(
+                format_string, QSPY.SEND_LOC_FILTER, object_kind.value, 0))
             packet.extend(qspy.string_to_binary(object_id))
 
         self.sendPacket(packet)
@@ -374,7 +384,7 @@ class qspy(threading.Thread):
                 filter1 = 0xFFFFFFFF
                 filter2 = 0xFFFFFFFF
                 filter3 = 0x1FFFFFFF
-                break # no point in continuing
+                break  # no point in continuing
             elif _filter == FILTER.SM:  # state machines
                 filter0 |= 0x000003FE
                 filter1 |= 0x03800000
@@ -384,48 +394,49 @@ class qspy(threading.Thread):
             elif _filter == FILTER.EQ:  # raw queues (for deferral)
                 filter0 |= 0x00780000
                 filter2 |= 0x00004000
-            elif _filter == FILTER.MP: # raw memory pools
+            elif _filter == FILTER.MP:  # raw memory pools
                 filter0 |= 0x03000000
                 filter2 |= 0x00008000
-            elif _filter == FILTER.QF: # framework
+            elif _filter == FILTER.QF:  # framework
                 filter0 |= 0xFC000000
                 filter1 |= 0x00001FC0
-            elif _filter == FILTER.TE: # time events
+            elif _filter == FILTER.TE:  # time events
                 filter1 |= 0x0000007F
-            elif _filter == FILTER.SC: # scheduler
+            elif _filter == FILTER.SC:  # scheduler
                 filter1 |= 0x007F0000
-            elif _filter == FILTER.U0: # user 70-79
+            elif _filter == FILTER.U0:  # user 70-79
                 filter2 |= 0x0000FFC0
-            elif _filter == FILTER.U1: # user 80-89
+            elif _filter == FILTER.U1:  # user 80-89
                 filter2 |= 0x03FF0000
-            elif _filter == FILTER.U2: # user 90-99
+            elif _filter == FILTER.U2:  # user 90-99
                 filter2 |= 0xFC000000
                 filter3 |= 0x0000000F
-            elif _filter == FILTER.U3: # user 100-109
+            elif _filter == FILTER.U3:  # user 100-109
                 filter3 |= 0x00003FF0
-            elif _filter == FILTER.U4: # user 110-124
+            elif _filter == FILTER.U4:  # user 110-124
                 filter3 |= 0x1FFFC000
-            elif _filter == FILTER.UA: # user 70-124 (all)
+            elif _filter == FILTER.UA:  # user 70-124 (all)
                 filter2 |= 0xFFFFFFC0
                 filter3 |= 0x1FFFFFFF
             else:
                 assert 0, 'invalid filter group'
 
-        self.sendPacket(struct.pack('< B B L L L L', QS_RX.GLB_FILTER,  16, filter0, filter1, filter2, filter3))
+        self.sendPacket(struct.pack(
+            '< B B L L L L', QS_RX.GLB_FILTER,  16, filter0, filter1, filter2, filter3))
 
- 
-    def sendCommand(self, command_id, param1 = 0, param2 = 0, param3 = 0):
+    def sendCommand(self, command_id, param1=0, param2=0, param3=0):
         format_string = '< B B I I I'
 
         if isinstance(command_id, int):
-            packet = struct.pack(format_string, QS_RX.COMMAND, command_id, param1, param2, param3)
+            packet = struct.pack(format_string, QS_RX.COMMAND,
+                                 command_id, param1, param2, param3)
         else:
-            packet = bytearray(struct.pack(format_string, QSPY.SEND_COMMAND, 0, param1, param2, param3))
+            packet = bytearray(struct.pack(
+                format_string, QSPY.SEND_COMMAND, 0, param1, param2, param3))
             # Add string command ID to end
             packet.extend(qspy.string_to_binary(command_id))
 
         self.sendPacket(packet)
-    
 
     def sendCurrentObject(self, object_kind, object_id):
 
@@ -433,33 +444,44 @@ class qspy(threading.Thread):
 
         # Build packet according to object_id type
         if isinstance(object_id, int):
-            packet = struct.pack(format_string, QS_RX.CURR_OBJ, object_kind.value, object_id)
+            packet = struct.pack(format_string, QS_RX.CURR_OBJ,
+                                 object_kind.value, object_id)
         else:
-            packet = bytearray(struct.pack(format_string, QSPY.SEND_CURR_OBJ, object_kind.value, 0))
+            packet = bytearray(struct.pack(
+                format_string, QSPY.SEND_CURR_OBJ, object_kind.value, 0))
             # add string object ID to end
             packet.extend(qspy.string_to_binary(object_id))
 
         self.sendPacket(packet)
 
     def sendTestProbe(self, function, data):
-        format_string = '< B I' +  theFmt['funPtr']
+        format_string = '< B I' + theFmt['funPtr']
 
         if isinstance(function, int):
             # Send directly to target
-            packet = struct.pack(format_string, QS_RX.TEST_PROBE, data, function)
+            packet = struct.pack(
+                format_string, QS_RX.TEST_PROBE, data, function)
         else:
             # Send to QSPY to provide 'function' from Fun Dictionary
-            packet = bytearray(struct.pack(format_string, QSPY.SEND_TEST_PROBE, data, 0))
+            packet = bytearray(struct.pack(
+                format_string, QSPY.SEND_TEST_PROBE, data, 0))
             # add string function name to end
             packet.extend(qspy.string_to_binary(function))
-        
+
         self.sendPacket(packet)
 
     def sendTick(self, rate):
         packet = struct.pack('< BB', QS_RX.TICK, rate)
         self.sendPacket(packet)
 
-    def sendEvent(self, ao_priority, signal, parameters = None):
+    def sendEvent(self, ao_priority, signal, parameters=None):
+        """ Sends and event to an active object
+
+        Args:
+            ao_priority : ao priority or one of the PRIO_COMMAND enums
+            signal : signal string or value
+            parameters : (optional) bytes or bytesarray of payload
+        """
         format_string = '< B B ' + theFmt['sig'] + 'h'
 
         if parameters is not None:
@@ -467,19 +489,20 @@ class qspy(threading.Thread):
         else:
             length = 0
 
-        if isinstance(signal, int): 
-            packet = bytearray(struct.pack(format_string, QS_RX.EVENT, ao_priority, signal, length))
+        if isinstance(signal, int):
+            packet = bytearray(struct.pack(
+                format_string, QS_RX.EVENT, ao_priority, signal, length))
             if parameters is not None:
                 packet.extend(parameters)
         else:
-            packet = bytearray(struct.pack(format_string, QSPY.SEND_EVENT, ao_priority, 0, length))
+            packet = bytearray(struct.pack(
+                format_string, QSPY.SEND_EVENT, ao_priority, 0, length))
             if parameters is not None:
                 packet.extend(parameters)
             packet.extend(qspy.string_to_binary(signal))
 
         self.sendPacket(packet)
 
- 
     def sendReset(self):
         self.sendPacket(struct.pack('< B', QS_RX.RESET))
 
@@ -492,7 +515,7 @@ class qspy(threading.Thread):
         Arguments:
         packet -- packet to send either a bytes() or bytearray() object
         """
-        
+
         tx_packet = bytearray({self.tx_packet_seq})
         tx_packet.extend(packet)
 
@@ -500,8 +523,7 @@ class qspy(threading.Thread):
 
         self.tx_packet_seq += 1
         self.tx_packet_seq &= 0xFF
-        # print("Qspy tx seq >>", self.tx_packet_seq)
-
+        #print("Qspy tx seq >>", self.tx_packet_seq)
 
     @staticmethod
     def string_to_binary(string_packet):
@@ -509,4 +531,3 @@ class qspy(threading.Thread):
         format_string = '{0}sB'.format(len(packed_string) + 1)
         # Null terminate and return
         return(struct.pack(format_string, packed_string, 0))
-        
