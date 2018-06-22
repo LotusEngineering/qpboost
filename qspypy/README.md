@@ -3,22 +3,21 @@
 The **qspypy** package is a rewrite of the existing Tcl qspy and qutest scripts 
 using Python.  
 
-This package currently contains two modules: **qspy** and **qutest**.  
+This package currently contains two main modules: **qspy** and **qutest**.  
 
-At some point in the future, the **qspyview** frontend may be added as well.  
+At some point in the future, the **qspyview** front end may be added as well.  
 Since Python comes with Tk, the translation effort shouldn't be too great.
 
 ## The qspy module
-The qspy module is the interface to the qspy backend application that ultimately 
+The qspy module is the interface to the qspy back end application that ultimately 
 interfaces with the target.  This module provides a series of message send and 
-callback methods so that knowledge of communications is hidden from any of the
-frontends that use it.
+callback methods so that knowledge of communications is hidden from qutest.  
 
 ## The qutest module
 The qutest module is designed to be run using the powerful
 [pytest](https://pytest.org/) Python testing framework.  
 
-Pytest makes it easy to discover and run your **qutest** scripts, 
+Pytest makes it easy to discover and run your qutest scripts, 
 in addition to a host of other features like jUnit XML output for Jenkins 
 and hundreds of other plugins.
 
@@ -32,23 +31,29 @@ Installation is through pip:
 
 ```pip install qspypy```
 
-# Test Creation
+# Test Creation and Test Fixtures
 If you understand how the existing Tcl based qutest scripts are written,
 it should not be too difficult for you to understand the qutest/pytest versions.
 
 Each pytest test function can derive from one or more test fixtures.  These
-test fixtures provide a context for a test and execute before (and 
-optionally after with a _yield_) each test.  This replaces the standard xUnit
-setUp and tearDown methods.
+test fixtures (defined in the qspypy.fixtures module) provide a context for  
+tests and execute before (and optionally after with a _yield_) each test.  
+Fixtures replace the standard xUnit setUp and tearDown methods.
 
-Qutest provides two test fixtures for you to use for your tests, 
-**qutest** and **qutest_noreset**.  As you can imagine, they both provide the
-same functinality, but **qutest_noreset** does not reset the target.
+
+Qspypy provides three test fixtures for you to use for your tests: 
+**qutest_session**, **qutest** and **qutest_noreset**.  Qutest_session is used
+to create the the context for the complete session.
+
+Qutest and qutest_norest both provide the same per-test context,
+but qutest_noreset does not reset the target.  Both of these contexts contain
+the qutest_context methods that are almost identical to the qutest.tcl procedure
+names.
 
 In addition to these, you can provide your own common test fixture, either in
 _conftest.py_ for global access or in each individual script.
 
-# Example from qpcpp version 6.3.2
+## Example from qpcpp version 6.3.2
 Here is a part of the dpp _test_philo.py_ test script.  
 The full example of this and the _test_table.py_ is available on
 [GitHub](https://github.com/LotusEngineering/qpboost/tree/master/qspypy/tests).
