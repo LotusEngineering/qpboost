@@ -34,7 +34,8 @@ import qspypy.config as CONFIG
 CONFIG.AUTOSTART_QSPY = True
 
 ## NOTE: You must change this to be the port your target is connected to
-CONFIG.QSPY_COM_PORT = 'COM3'
+# CONFIG.QSPY_COM_PORT = 'COM3'
+CONFIG.QSPY_COM_PORT = '/dev/ttyACM0'
 
 # IF you want to run a local target, uncomment the following lines and
 # change the executable name to match (executable must be on your path)

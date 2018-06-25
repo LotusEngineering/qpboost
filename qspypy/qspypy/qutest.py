@@ -20,7 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+#
+# qutest provides the test context and a number of helper methods for pytest
+#
+
+import os
 import sys
+import signal
 import pytest
 import time
 from threading import Event
@@ -87,11 +93,20 @@ class qutest_context():
 
         if sys.platform == 'win32':
             process_id = Popen(argumentList, creationflags=CREATE_NEW_CONSOLE)
+        elif sys.platform == 'linux':
+            cmd_list = ['gnome-terminal', '--disable-factory', '-e']
+            argstring = " ".join(argumentList)
+            cmd_list.append(argstring)
+            process_id = Popen(cmd_list, preexec_fn=os.setpgrp)
+        elif sys.platform == 'darwin':
+            # Don't know if this works, doubt it
+            cmd_list = ['open', '-W', '-a', 'Terminal.app', argumentList[0], '--args']
+            argstring = " ".join(argumentList[1:])
+            cmd_list.append(argstring)
+            process_id = Popen(cmd_list)
         else:
-            cmd_list = ['exec']
-            cmd_list.extend(argumentList)
-            process_id = Popen(argumentList, shell=True)
-        
+            assert False, "Unknown OS platform:{0}".format(sys.platform)
+            
         return process_id
 
     @staticmethod
@@ -103,9 +118,20 @@ class qutest_context():
         
         """
         if process_id is not None:
-            process_id.terminate()
-            process_id.wait()
-            process_id = None
+            if sys.platform == 'win32':
+                process_id.terminate()
+                process_id.wait()
+                process_id = None
+            elif sys.platform == 'linux':
+                os.killpg(process_id.pid, signal.SIGINT)
+            elif sys.platform == 'darwin':
+                # Don't know how to do this on Mac
+                process_id.terminate()
+                process_id.wait()
+                os.killpg(process_id.pid, signal.SIGINT)
+                process_id = None
+            else:
+                assert False, "Unknown OS platform:{0}".format(sys.platform)
         else:
             assert False, "Trying to to stop non-existant process"
 

@@ -160,10 +160,18 @@ pytest -x -v
 You can run the above command from any directory in or above your scripts 
 as pytest will recurse into folders and run any tests it finds.
 
+# Known Issues
+- Support for config.AUTOSTART_QSPY mac not tested
+- Potential issue with dropped characters on linux
+
 # Release Notes
-Version | Descripton
--------|----------
-1.0.0 | Initial release
+## 1.0.1
+- Fixed crash on linux
+- Added config.AUTOSTART_QSPY support for linux via gnome-terminal
+- Now defaults to config.AUTOSTART_QSPY to False 
+
+## 1.0.0
+- Initial release to PyPi
 
 # Source File Description
 File | Descripton

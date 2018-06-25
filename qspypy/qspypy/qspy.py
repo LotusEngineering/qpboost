@@ -255,6 +255,8 @@ class qspy(threading.Thread):
         while self.alive.isSet():
             try:
                 packet = self.socket.recv(1024)
+                if len(packet) < 2:
+                    continue
 
                 rx_sequence = packet[0]
                 recordID = packet[1]
