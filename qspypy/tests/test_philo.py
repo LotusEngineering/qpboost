@@ -48,7 +48,7 @@ def on_reset(qutest):
 
 def test_TIMEOUT_Philo_post(qutest, on_reset):
     qutest.post('TIMEOUT_SIG')
-    qutest.expect("%timestamp AO-Post  Sdr=QS_RX,Obj=AO_Philo<2>,Evt<Sig=TIMEOUT_SIG,*")
+    qutest.expect("%timestamp AO-Post  Sdr=QS_RX,Obj=AO_Philo<2>,Evt<Sig=TIMEOUT_SIG*")
     qutest.expect("%timestamp AO-GetL  Obj=AO_Philo<2>,Evt<Sig=TIMEOUT_SIG,*")
     qutest.expect("%timestamp Disp===> Obj=AO_Philo<2>,Sig=TIMEOUT_SIG,State=thinking")
     qutest.expect("===RTC===> St-Exit  Obj=AO_Philo<2>,State=thinking")

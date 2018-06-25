@@ -20,11 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import sys
 import pytest
 import time
 from threading import Event
 from queue import Queue
-from subprocess import Popen, CREATE_NEW_CONSOLE
+from subprocess import Popen
+if sys.platform == 'win32':
+    from subprocess import CREATE_NEW_CONSOLE
 
 from qspypy.qspy import qspy, QS_CHANNEL, QS_OBJ_KIND, FILTER, PRIO_COMMAND
 import qspypy.config as CONFIG
@@ -52,7 +55,7 @@ class qutest_context():
         self.qspy = qspy()
 
         self.attached_event.clear()
-        self.qspy.attach(self)
+        self.qspy.attach(self, host = CONFIG.QSPY_HOST, port = CONFIG.QSPY_UDP_PORT)
         # Wait for attach
         if not self.attached_event.wait(CONFIG.QSPY_ATTACH_TIMEOUT_SEC):
             __tracebackhide__ = True
@@ -71,39 +74,73 @@ class qutest_context():
         if CONFIG.USE_LOCAL_TARGET:
             self.stop_target()
 
+    @staticmethod
+    def run_program(argumentList):
+        """ Helper method for starting programs like qspy and target 
+        
+        Args:
+          argumentList : Popen list where first item is program name
+        
+        Returns:
+          A process ID that can be used to terminate the program
+        """
+
+        if sys.platform == 'win32':
+            process_id = Popen(argumentList, creationflags=CREATE_NEW_CONSOLE)
+        else:
+            cmd_list = ['exec']
+            cmd_list.extend(argumentList)
+            process_id = Popen(argumentList, shell=True)
+        
+        return process_id
+
+    @staticmethod
+    def halt_program(process_id):
+        """ Helper method for stopping programs like qspy and target 
+        
+        Args:
+          process_id : process to terminate
+        
+        """
+        if process_id is not None:
+            process_id.terminate()
+            process_id.wait()
+            process_id = None
+        else:
+            assert False, "Trying to to stop non-existant process"
+
+
+
+
     def start_qspy(self):
         """ Helper to automatically start qspy. """
-
+        args = ['qspy', '-u' + str(CONFIG.QSPY_UDP_PORT)]
+        
         # Local targets use tcp sockets
         if CONFIG.USE_LOCAL_TARGET:
-            target_port = '-t'
+            args.append('-t')
         else:
-            target_port = '-c' + CONFIG.QSPY_COM_PORT
+            args.append('-c' + CONFIG.QSPY_COM_PORT)
+            args.append('-b' + str(CONFIG.QSPY_BAUD_RATE))
 
         # Start qspy
-        self.qspy_process = Popen(
-            ['qspy', '-u', target_port], creationflags=CREATE_NEW_CONSOLE)
+        self.qspy_process = qutest_context.run_program(args)
 
     def stop_qspy(self):
         """ Helper to stop qspy. """
         if self.qspy_process is not None:
-            self.qspy_process.terminate()
-            self.qspy_process.wait()
-            self.qspy_process = None
+            qutest_context.halt_program(self.qspy_process)
 
-    def start_target(self):
+    def start_local_target(self):
         """ Used to start a local target executable for dual targeting. """
 
-        self.target_process = Popen(
-            [CONFIG.LOCAL_TARGET_EXECUTABLE, CONFIG.LOCAL_TARGET_QSPY_HOST], creationflags=CREATE_NEW_CONSOLE)
-        assert self.target_process is not None, "Problem starting target, make sure path is correct"
+        self.target_process = qutest_context.run_program(
+            [CONFIG.LOCAL_TARGET_EXECUTABLE, CONFIG.LOCAL_TARGET_QSPY_HOST])
 
     def stop_target(self):
         """ Stops local target. """
         if self.target_process is not None:
-            self.target_process.terminate()
-            self.target_process.wait()
-            self.target_process = None
+            qutest_context.halt_program(self.target_process)
 
     def reset_target(self):
         """ Resets the target (local or remote). """
@@ -122,7 +159,7 @@ class qutest_context():
                 # Let the target executable finish
                 time.sleep(CONFIG.TARGET_START_TIMEOUT_SEC)
                 self.stop_target()
-            self.start_target()
+            self.start_local_target()
         else:
             self.qspy.sendReset()
 

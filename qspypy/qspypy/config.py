@@ -27,16 +27,26 @@
 
 
 #### QSpy settings  ####
+# Set to true have QSpy automatically start/stop at the beginning/end of a test session
+# Note: qspy must be on system path
+AUTOSTART_QSPY = False
+
 # Serial port that target is connected to for qspy, used when AUTO_START_QSPY is true
 # MODIFY FOR YOUR REMOTE TARGET
-QSPY_COM_PORT = 'COM3'
+QSPY_COM_PORT = 'COM1'
 
-# Set to true have QSpy automatically start/stop at the beginning/end of a test session, qspy must be on system path
-AUTOSTART_QSPY = True
+# BAUD rate for serially connected qspy, used when AUTO_START_QSPY is true
+# MODIFY FOR YOUR REMOTE TARGET
+QSPY_BAUD_RATE = 115200
+
+# The UDP port to connect to qpsy on
+QSPY_UDP_PORT = 7701
+
+# The host machine that qspy is on
+QSPY_HOST = 'localhost'
 
 
 ###### Local host settings ######
-
 # Set to true to launch and connect to a local target
 USE_LOCAL_TARGET = False
 

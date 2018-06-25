@@ -305,7 +305,7 @@ class qspy(threading.Thread):
         """ Attach to the QSpy backend
 
         Keyword arguments:
-        host -- host IP address of QSpy (default 'local host')
+        host -- host IP address of QSpy (default 'localhost')
         port -- socket port of QSpy (default 7701)
         channels -- what channels to attach to (default QPChannels.TEXT)
         local_port -- the local/client port to use (default None for automatic)

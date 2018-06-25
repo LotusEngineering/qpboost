@@ -1,7 +1,7 @@
 
 # The qspypy package 
 The **qspypy** package is a rewrite of the existing Tcl qspy and qutest scripts 
-using Python.  
+using Python 3.  
 
 This package currently contains two main modules: **qspy** and **qutest**.  
 
@@ -29,7 +29,7 @@ configuration script.
 # Installation
 Installation is through pip:
 
-```pip install qspypy```
+```pip3 install qspypy```
 
 # Test Creation and Test Fixtures
 If you understand how the existing Tcl based qutest scripts are written,
@@ -105,16 +105,19 @@ For example:
 ## Configuring qutest and pytest
 Before you can run your tests, you must configure pytest by creating a 
 _conftest.py_ file in the folder where your tests reside.  At a minimum, this 
-file needs to include the qspypy fixtures and the com port that qspy uses 
-to communicate with the target. 
+file needs to include the qspypy fixtures.  You can also configure qutest
+by importing qspy.config and modifying the default values.
 
 Here's the example from qspypy/tests on GitHub:
 ```
+# Load common fixtures used throughout testing
+from qspypy.fixtures import qutest_session, qutest, qutest_noreset
+
 # Load default configuration so we can change it before running
 import qspypy.config as CONFIG
 
-# Load common fixtures used throughout testing
-from qspypy.fixtures import qutest_session, qutest, qutest_noreset
+# Automatically start/stop qspy for the session
+CONFIG.AUTOSTART_QSPY = True
 
 ## NOTE: You must change this to be the port your target is connected to
 CONFIG.QSPY_COM_PORT = 'COM3'
