@@ -30,7 +30,7 @@ import qspypy.config as CONFIG
 
 
 @pytest.fixture(scope='session')
-def qutest_session():
+def session():
     """ test fixture for a complete session (all test files)"""
 
     # Create the one and only qutest_context used through out the session
@@ -46,22 +46,52 @@ def qutest_session():
     context.session_teardown()
 
 
+@pytest.fixture(scope='module')
+def module(session, request):
+    """ Fixture that looks for on_reset() in test module and registers it """
+
+    if hasattr(request.module, "on_reset"):
+        on_reset = getattr(request.module, "on_reset")
+        session.on_reset_callback = on_reset
+    yield session
+    session.on_reset_callback = None
+
+
+@pytest.fixture
+def reset(module):
+    """ Fixture used for resetting the target, Internal use only"""
+    if CONFIG.RESET_TARGET_ON_SETUP:
+        module.call_on_reset()
+    return module
+
+
 @pytest.fixture()
-def qutest(qutest_session):
+def qutest(reset):
     """ Default test fixture for each test function.
 
     This will reset the target before each test unless
     the RESET_TARGET_ON_SETUP is set to False
     """
 
-    if CONFIG.RESET_TARGET_ON_SETUP:
-        qutest_session.reset_target()
+    # Setup
+    reset.call_on_setup()
 
-    return qutest_session
+    # Run Test
+    yield reset
+
+    # Teardown
+    reset.call_on_teardown()
 
 
 @pytest.fixture()
-def qutest_noreset(qutest_session):
+def qutest_noreset(session):
     """ Test fixture for each test function that does NOT reset the target. """
 
-    return qutest_session
+    # Setup
+    session.call_on_setup()
+
+    # Run Test
+    yield session
+
+    # Teardown
+    session.call_on_teardown()

@@ -32,9 +32,8 @@ import struct
 from qspypy.qspy import FILTER, QS_OBJ_KIND
 
 
-@pytest.fixture
 def on_reset(qutest):
-    """ Common fixture to handle reset """
+    """ Common reset handler called by qutest after resetting target """
     
     qutest.expect_pause()
     qutest.Continue()  # note continue in lower case. is a reserved word in python
@@ -45,7 +44,7 @@ def on_reset(qutest):
 # tests...
 
 
-def test_PAUSE_Table(qutest, on_reset):
+def test_PAUSE_Table(qutest):
     qutest.dispatch('PAUSE_SIG')
     qutest.expect(
         "%timestamp Disp===> Obj=AO_Table,Sig=PAUSE_SIG,State=serving")
@@ -56,7 +55,7 @@ def test_PAUSE_Table(qutest, on_reset):
     qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
 
 
-def test_SERVE_Table_1(qutest, on_reset):
+def test_SERVE_Table_1(qutest):
     qutest.command(1)
     qutest.expect(
         "%timestamp Disp===> Obj=AO_Table,Sig=SERVE_SIG,State=serving")

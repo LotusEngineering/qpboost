@@ -25,21 +25,28 @@
 #
 
 # Load common fixtures used throughout testing
-from qspypy.fixtures import qutest_session, qutest, qutest_noreset
+from qspypy.fixtures import session, reset, module, qutest, qutest_noreset 
+
+
+
+
+
+## Below are examples of how to configure and run qutest outside of the 
+## command line qutest tool (i.e. if you want to run pytest directly)
+
 
 # Load default configuration so we can change it before running
-import qspypy.config as CONFIG
+#import qspypy.config as CONFIG
 
 # Automatically start/stop qspy for the session
-CONFIG.AUTOSTART_QSPY = True
+#CONFIG.AUTOSTART_QSPY = True
 
 ## NOTE: You must change this to be the port your target is connected to
-CONFIG.QSPY_COM_PORT = 'COM3'
+#CONFIG.QSPY_COM_PORT = 'COM3'
 #CONFIG.QSPY_COM_PORT = '/dev/ttyACM0'
 
 # IF you want to run a local target, uncomment the following lines and
 # change the executable name to match (executable must be on your path)
-# CONFIG.USE_LOCAL_TARGET = True
-# CONFIG.LOCAL_TARGET_EXECUTABLE = 'test_dpp'
-
+#CONFIG.USE_LOCAL_TARGET = True
+#CONFIG.LOCAL_TARGET_EXECUTABLE = 'test_dpp'
 

@@ -337,6 +337,7 @@ class qspy(threading.Thread):
     def detach(self):
         self.alive.clear()
         self.sendPacket(struct.pack('< B', QSPY.DETACH.value))
+        time.sleep(0.300)
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         self.socket = None
@@ -510,6 +511,12 @@ class qspy(threading.Thread):
 
     def sendContinue(self):
         self.sendPacket(struct.pack('< B', QS_RX.CONTINUE))
+
+    def sendSetup(self):
+        self.sendPacket(struct.pack('< B', QS_RX.TEST_SETUP))
+
+    def sendTeardown(self):
+        self.sendPacket(struct.pack('< B', QS_RX.TEST_TEARDOWN))
 
     def sendPacket(self, packet):
         """ sends a packet

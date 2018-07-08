@@ -42,6 +42,10 @@ QSPY_BAUD_RATE = 115200
 # The UDP port to connect to qpsy on
 QSPY_UDP_PORT = 7701
 
+# The local UDP port used to connect to qspy with, default None means 
+# that the system will choose one
+QSPY_LOCAL_UDP_PORT = None
+
 # The host machine that qspy is on
 QSPY_HOST = 'localhost'
 
@@ -55,6 +59,9 @@ LOCAL_TARGET_QSPY_HOST = 'localhost'
 
 # Set this to the target executible name (e.g. test_dpp), target must be on system path
 LOCAL_TARGET_EXECUTABLE = 'test_dpp'
+
+# Set this to true to have the target start in a console
+LOCAL_TARGET_USES_CONSOLE = False
 
 
 ###### Misc. settings ##########

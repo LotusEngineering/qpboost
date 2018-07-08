@@ -41,5 +41,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ),
     keywords = 'qp qpcpp qtools qpc qutest',
-    install_requires = ['pytest>=3.6.1']
+    install_requires = ['pytest>=3.6.1'],
+    entry_points = {
+        'console_scripts': ['qutest=qspypy.qutest:qutest_main'],
+    }    
 )

@@ -31,9 +31,8 @@ import struct
 from qspypy.qspy import FILTER, QS_OBJ_KIND
 
 
-@pytest.fixture
 def on_reset(qutest):
-    """ Common fixture to handle reset """
+    """ Common reset handler called by qutest after resetting target """
 
     qutest.expect_pause()
     qutest.glb_filter(FILTER.SM)
@@ -46,7 +45,7 @@ def on_reset(qutest):
     qutest.current_obj(QS_OBJ_KIND.SM_AO, 'AO_Philo<2>')
 
 
-def test_TIMEOUT_Philo_post(qutest, on_reset):
+def test_TIMEOUT_Philo_post(qutest):
     qutest.post('TIMEOUT_SIG')
     qutest.expect("%timestamp AO-Post  Sdr=QS_RX,Obj=AO_Philo<2>,Evt<Sig=TIMEOUT_SIG*")
     qutest.expect("%timestamp AO-GetL  Obj=AO_Philo<2>,Evt<Sig=TIMEOUT_SIG,*")
@@ -69,7 +68,7 @@ def test_publish_EAT_2(qutest_noreset):
     qutest.expect("%timestamp ===>Tran Obj=AO_Philo<2>,Sig=EAT_SIG,State=hungry->eating")
     qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
 
-def test_TIMEOUT_Philo_thinking_ASSERT(qutest, on_reset):
+def test_TIMEOUT_Philo_thinking_ASSERT(qutest):
     qutest.probe('QActive::post_', 1)
     qutest.dispatch('TIMEOUT_SIG')
     qutest.expect("%timestamp Disp===> Obj=AO_Philo<2>,Sig=TIMEOUT_SIG,State=thinking")
@@ -77,7 +76,7 @@ def test_TIMEOUT_Philo_thinking_ASSERT(qutest, on_reset):
     qutest.expect("%timestamp TstProbe Fun=QActive::post_,Data=1")
     qutest.expect("%timestamp =ASSERT= Mod=qf_actq,Loc=110")
 
-def test_TIMEOUT_Philo_eating_PUBLISH_from_AO(qutest, on_reset):
+def test_TIMEOUT_Philo_eating_PUBLISH_from_AO(qutest):
     qutest.glb_filter(FILTER.OFF)
     qutest.dispatch('TIMEOUT_SIG')
     qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
@@ -96,7 +95,7 @@ def test_TIMEOUT_Philo_eating_PUBLISH_from_AO(qutest, on_reset):
     qutest.expect("%timestamp QF-gc    Evt<Sig=TIMEOUT_SIG,Pool=1,Ref=1>")
     qutest.expect("%timestamp Trg-Done QS_RX_EVENT")
 
-def test_timeEvt_Philo_tick(qutest, on_reset):
+def test_timeEvt_Philo_tick(qutest):
     qutest.glb_filter(FILTER.SM, FILTER.AO, FILTER.TE)
     qutest.current_obj(QS_OBJ_KIND.TE, 'l_philo<2>.m_timeEvt')
     qutest.tick()

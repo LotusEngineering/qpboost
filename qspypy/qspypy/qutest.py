@@ -48,6 +48,7 @@ class qutest_context():
         self.attached_event = Event()
         self.have_target_event = Event()
         self.text_queue = Queue(maxsize=0)
+        self.on_reset_callback = None
 
     def session_setup(self):
         """ Setup that should run on once per session. """
@@ -61,7 +62,7 @@ class qutest_context():
         self.qspy = qspy()
 
         self.attached_event.clear()
-        self.qspy.attach(self, host = CONFIG.QSPY_HOST, port = CONFIG.QSPY_UDP_PORT)
+        self.qspy.attach(self, host = CONFIG.QSPY_HOST, port = CONFIG.QSPY_UDP_PORT, local_port = CONFIG.QSPY_LOCAL_UDP_PORT)
         # Wait for attach
         if not self.attached_event.wait(CONFIG.QSPY_ATTACH_TIMEOUT_SEC):
             __tracebackhide__ = True
@@ -70,40 +71,52 @@ class qutest_context():
 
     def session_teardown(self):
         """ Teardown that runs at the end of a session. """
+        # Stop target executable
+        if CONFIG.USE_LOCAL_TARGET:
+            self.stop_local_target()
 
         self.qspy.detach()
 
         if CONFIG.AUTOSTART_QSPY:
             self.stop_qspy()
 
-        # Stop target executable
-        if CONFIG.USE_LOCAL_TARGET:
-            self.stop_target()
 
     @staticmethod
-    def run_program(argumentList):
+    def run_program(argumentList, startInConsole):
         """ Helper method for starting programs like qspy and target 
         
         Args:
           argumentList : Popen list where first item is program name
+          startInConsole : bool, if True starts in new console
         
         Returns:
           A process ID that can be used to terminate the program
         """
 
         if sys.platform == 'win32':
-            process_id = Popen(argumentList, creationflags=CREATE_NEW_CONSOLE)
+            if startInConsole:
+                process_id = Popen(argumentList, creationflags=CREATE_NEW_CONSOLE)
+            else:
+                process_id = Popen(argumentList)
         elif sys.platform == 'linux':
-            cmd_list = ['gnome-terminal', '--disable-factory', '-e']
-            argstring = " ".join(argumentList)
-            cmd_list.append(argstring)
-            process_id = Popen(cmd_list, preexec_fn=os.setpgrp)
+            if startInConsole:
+                cmd_list = ['gnome-terminal', '--disable-factory', '-e']
+                argstring = " ".join(argumentList)
+                cmd_list.append(argstring)
+                process_id = Popen(cmd_list, preexec_fn=os.setpgrp)
+            else:
+                process_id = Popen(argumentList, preexec_fn=os.setpgrp)
+
         elif sys.platform == 'darwin':
             # Don't know if this works, doubt it
-            cmd_list = ['open', '-W', '-a', 'Terminal.app', argumentList[0], '--args']
-            argstring = " ".join(argumentList[1:])
-            cmd_list.append(argstring)
-            process_id = Popen(cmd_list)
+            if startInConsole:
+                cmd_list = ['open', '-W', '-a', 'Terminal.app', argumentList[0], '--args']
+                argstring = " ".join(argumentList[1:])
+                cmd_list.append(argstring)
+                process_id = Popen(cmd_list)
+            else:
+                process_id = Popen(argumentList)
+
         else:
             assert False, "Unknown OS platform:{0}".format(sys.platform)
             
@@ -150,7 +163,7 @@ class qutest_context():
             args.append('-b' + str(CONFIG.QSPY_BAUD_RATE))
 
         # Start qspy
-        self.qspy_process = qutest_context.run_program(args)
+        self.qspy_process = qutest_context.run_program(args, True)
 
     def stop_qspy(self):
         """ Helper to stop qspy. """
@@ -161,12 +174,15 @@ class qutest_context():
         """ Used to start a local target executable for dual targeting. """
 
         self.target_process = qutest_context.run_program(
-            [CONFIG.LOCAL_TARGET_EXECUTABLE, CONFIG.LOCAL_TARGET_QSPY_HOST])
+            [CONFIG.LOCAL_TARGET_EXECUTABLE, CONFIG.LOCAL_TARGET_QSPY_HOST], CONFIG.LOCAL_TARGET_USES_CONSOLE)
 
-    def stop_target(self):
+    def stop_local_target(self):
         """ Stops local target. """
+
         if self.target_process is not None:
-            qutest_context.halt_program(self.target_process)
+            self.qspy.sendReset() # Sending reset halts target
+            time.sleep(0.500)
+            self.target_process = None
 
     def reset_target(self):
         """ Resets the target (local or remote). """
@@ -181,10 +197,7 @@ class qutest_context():
         # If running with a local target, kill and restart it
         if CONFIG.USE_LOCAL_TARGET:
             if self.target_process is not None:
-                self.qspy.sendReset()
-                # Let the target executable finish
-                time.sleep(CONFIG.TARGET_START_TIMEOUT_SEC)
-                self.stop_target()
+                self.stop_local_target()
             self.start_local_target()
         else:
             self.qspy.sendReset()
@@ -203,6 +216,26 @@ class qutest_context():
 
         self.qspy.sendContinue()
         self.expect('           Trg-Ack  QS_RX_TEST_CONTINUE')
+
+    def call_on_setup(self):
+        """ Sends a setup command to target."""
+
+        self.qspy.sendSetup()
+        self.expect('           Trg-Ack  QS_RX_TEST_SETUP')
+
+    def call_on_teardown(self):
+        """ Sends a teardown command to target."""
+
+        self.qspy.sendTeardown()
+        self.expect('           Trg-Ack  QS_RX_TEST_TEARDOWN')
+
+    def call_on_reset(self):
+        """ Resets the target and calls any registered reset handler """
+
+        self.reset_target()
+        if self.on_reset_callback is not None:
+            self.on_reset_callback(self)
+
 
     def expect_pause(self):
         """ Pause expectation. """
@@ -375,3 +408,53 @@ class qutest_context():
         self.text_queue.put(record)
         #recordId, line = self.qspy.parse_QS_TEXT(record)
         #print('OnRecord_QS_TEXT record:{0}, line:"{1}"'.format(recordId.name, line) )
+
+def qutest_main():
+    """ Main entry point for qutest """
+
+    options = ['-v', '--tb=short']
+    
+    # Parse command line like Tcl script
+    num_tests = 0
+    args = sys.argv[1:]
+    num_args = len(args)
+
+    if '-h' in args or '--help' in args or '?' in args:
+        print("Usage: qutest [test-scripts] [host_exe] [host[:port]] [local_port]")
+        return
+
+    if num_args >= 1: # 1 or more test scripts
+        test_scripts = [] 
+        for arg in args:
+            if '.py' in arg:
+                test_scripts.append(arg)
+                num_tests += 1
+
+        if '*.py' not in test_scripts: 
+            options.extend(test_scripts) # pass test scripts to pytest
+        else:
+            num_tests = 1
+        #print("************ test scripts", test_scripts, "num tests", num_tests)
+    if num_args > (num_tests) : 
+        host_exe = args[num_tests]
+        if len(host_exe) > 0: # passing "" means no local host
+            CONFIG.USE_LOCAL_TARGET = True
+            CONFIG.LOCAL_TARGET_EXECUTABLE = host_exe
+            #print(f'host_exe:{host_exe}')
+    if num_args > (1 + num_tests): 
+        host_port = args[1 + num_tests]
+        host = host_port.split(':')
+        CONFIG.QSPY_HOST = host[0]
+        if len(host) > 1: 
+            port = host[1]
+            CONFIG.QSPY_UDP_PORT = int(port)
+        #print(f'host_port:{host_port}')
+    if num_args > (2 + num_tests): 
+        local_port = args[2 + num_tests]
+        CONFIG.QSPY_LOCAL_UDP_PORT = int(local_port)
+
+    # Run pytest with options
+    pytest.main(options)
+
+if __name__ == "__main__":
+    qutest_main()

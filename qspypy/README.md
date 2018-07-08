@@ -165,6 +165,18 @@ as pytest will recurse into folders and run any tests it finds.
 - Potential issue with dropped characters on linux
 
 # Release Notes
+## 1.1.0
+- Added command line tool **qutest** which is interface compatible with existing
+qutest.tcl script.
+- Qutest will no longer show a console for local targets, this can be changed by
+setting LOCAL_TARGET_USES_CONSOLE to True.
+- Added new configuration QSPY_LOCAL_UDP_PORT to specify local UDP port.
+- Simplifed test fixtures to just require qutest or qutest_noreset.
+- Added reset callback via registration in module fixture.
+- No longer kills local_target process but relies on reset message only.
+- Added another test example: test_blinky.py
+
+
 ## 1.0.1
 - Fixed crash on linux
 - Added config.AUTOSTART_QSPY support for linux via gnome-terminal
