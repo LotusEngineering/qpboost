@@ -27,7 +27,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="qspypy",
-    version="1.0.1",
+    version="1.1.0",
     author="Lotus Engineering, LLC",
     author_email="dominic_valentino@lotusengineeringllc.com",
     description="Python implementation of qspy Tcl scripts",
@@ -43,6 +43,6 @@ setuptools.setup(
     keywords = 'qp qpcpp qtools qpc qutest',
     install_requires = ['pytest>=3.6.1'],
     entry_points = {
-        'console_scripts': ['qutest=qspypy.qutest:qutest_main'],
+        'console_scripts': ['qutest=qspypy.qutest:main', 'qutest_convert=qspypy.qutest_convert:main'],
     }    
 )

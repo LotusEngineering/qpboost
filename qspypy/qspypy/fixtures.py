@@ -53,8 +53,20 @@ def module(session, request):
     if hasattr(request.module, "on_reset"):
         on_reset = getattr(request.module, "on_reset")
         session.on_reset_callback = on_reset
+
+    if hasattr(request.module, "on_setup"):
+        on_setup = getattr(request.module, "on_setup")
+        session.on_setup_callback = on_setup
+
+    if hasattr(request.module, "on_teardown"):
+        on_teardown = getattr(request.module, "on_teardown")
+        session.on_teardown_callback = on_teardown
+
     yield session
+
     session.on_reset_callback = None
+    session.on_setup_callback = None
+    session.on_teardown_callback = None
 
 
 @pytest.fixture

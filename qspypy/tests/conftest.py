@@ -29,8 +29,6 @@ from qspypy.fixtures import session, reset, module, qutest, qutest_noreset
 
 
 
-
-
 ## Below are examples of how to configure and run qutest outside of the 
 ## command line qutest tool (i.e. if you want to run pytest directly)
 

@@ -172,7 +172,19 @@ class QSpyRecords(IntEnum):
     QS_ASSERT_FAIL = 69,  # /*!< assertion failed in the code */
 
     # /* [70] Application-specific (User) QS records */
-    QS_USER = 70  # /*!< the first record available to QS users */
+    QS_USER1 = 70  # /*!< the first record available to QS users */
+    QS_USER2 = 71  # /*!< the first record available to QS users */
+    QS_USER3 = 72  # /*!< the first record available to QS users */
+    QS_USER4 = 73  # /*!< the first record available to QS users */
+    QS_USER5 = 74  # /*!< the first record available to QS users */
+    QS_USER6 = 75  # /*!< the first record available to QS users */
+    QS_USER7 = 76  # /*!< the first record available to QS users */
+    QS_USER8 = 77  # /*!< the first record available to QS users */
+    QS_USER9 = 78  # /*!< the first record available to QS users */
+    QS_USER10 = 79  # /*!< the first record available to QS users */
+    QS_USER11 = 80  # /*!< the first record available to QS users */
+    QS_USER12 = 81  # /*!< the first record available to QS users */
+    QS_USER13 = 82  # /*!< the first record available to QS users */
 
 
 # Enumeration for channel type, this must match enum in "be.c"
@@ -427,9 +439,41 @@ class qspy(threading.Thread):
         self.sendPacket(struct.pack(
             '< B B L L L L', QS_RX.GLB_FILTER,  16, filter0, filter1, filter2, filter3))
 
-    def sendCommand(self, command_id, param1=0, param2=0, param3=0):
-        format_string = '< B B I I I'
+    def sendFill(self, offset, size, num, item):
+        """ Sends fill packet """
 
+        if size == 1:
+            item_fmt = 'B'
+        elif size == 2:
+            item_fmt = 'H'
+        elif size == 4:
+            item_fmt = 'I'
+        else:
+            assert False, "size for sendFill must be 1, 2, or 4!"
+
+        format_string = '< B H B B ' + item_fmt
+        packet = struct.pack(format_string, QS_RX.FILL, offset, size, num, item)
+        self.sendPacket(packet)
+
+    def sendPeek(self, offset, size, num):
+        """ Sends poke packet """
+
+        format_string = '< B H B B' 
+        packet = struct.pack(format_string, QS_RX.PEEK, offset, size, num)
+        self.sendPacket(packet)
+    
+    def sendPoke(self, offset, size, num, data):
+        """ Sends peek packet """
+
+        format_string = '< B H B B ' 
+        packet = bytearray(struct.pack(format_string, QS_RX.POKE, offset, size, num))
+        packet.extend(data)
+        self.sendPacket(packet)
+
+    def sendCommand(self, command_id, param1=0, param2=0, param3=0):
+        """ Sends command packet """
+
+        format_string = '< B B I I I'
         if isinstance(command_id, int):
             packet = struct.pack(format_string, QS_RX.COMMAND,
                                  command_id, param1, param2, param3)
@@ -438,13 +482,11 @@ class qspy(threading.Thread):
                 format_string, QSPY.SEND_COMMAND, 0, param1, param2, param3))
             # Add string command ID to end
             packet.extend(qspy.string_to_binary(command_id))
-
         self.sendPacket(packet)
 
     def sendCurrentObject(self, object_kind, object_id):
 
         format_string = '< B B ' + theFmt['objPtr']
-
         # Build packet according to object_id type
         if isinstance(object_id, int):
             packet = struct.pack(format_string, QS_RX.CURR_OBJ,
@@ -454,7 +496,6 @@ class qspy(threading.Thread):
                 format_string, QSPY.SEND_CURR_OBJ, object_kind.value, 0))
             # add string object ID to end
             packet.extend(qspy.string_to_binary(object_id))
-
         self.sendPacket(packet)
 
     def sendTestProbe(self, function, data):

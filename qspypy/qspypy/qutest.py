@@ -49,6 +49,8 @@ class qutest_context():
         self.have_target_event = Event()
         self.text_queue = Queue(maxsize=0)
         self.on_reset_callback = None
+        self.on_setup_callback = None
+        self.on_teardown_callback = None
 
     def session_setup(self):
         """ Setup that should run on once per session. """
@@ -222,12 +224,16 @@ class qutest_context():
 
         self.qspy.sendSetup()
         self.expect('           Trg-Ack  QS_RX_TEST_SETUP')
+        if self.on_setup_callback is not None:
+            self.on_setup_callback(self)
 
     def call_on_teardown(self):
         """ Sends a teardown command to target."""
 
         self.qspy.sendTeardown()
         self.expect('           Trg-Ack  QS_RX_TEST_TEARDOWN')
+        if self.on_teardown_callback is not None:
+            self.on_teardown_callback(self)
 
     def call_on_reset(self):
         """ Resets the target and calls any registered reset handler """
@@ -353,6 +359,48 @@ class qutest_context():
         self.qspy.sendCommand(command_id, param1, param2, param3)
         self.expect('           Trg-Ack  QS_RX_COMMAND')
 
+    def fill(self, offset, size, num, item = 0):
+        """ Fills data into the target
+
+        Args:
+          offset : offset, in bytes from start of current_obj
+          size : size of data item (1, 2, or 4)
+          num : number of data items to fill
+          item : (optional, default zero) data item to fill with
+          """
+        self.qspy.sendFill(offset, size, num, item )
+        self.expect('           Trg-Ack  QS_RX_FILL')
+
+    def peek(self, offset, size, num):
+        """ Peeks data at the given offset from the start address of the 
+        Application (AP) Current-Object inside the Target.
+    
+        Args:
+          offset :offset [in bytes] from the start of the current_obj AP
+          size : size of the data items (1, 2, or 4)
+          num  : number of data items to peek
+        """
+        assert size == 1 or size == 2 or size == 4, 'Size must be 1, 2, or 4'
+
+        self.qspy.sendPeek(offset, size, num)
+
+    def poke(self, offset, size, data):
+        """ Pokes provided data at the given offset from the
+        start address of the Application (AP) Current-Object inside the Target.
+
+        Args:
+          offset : offset [in bytes] from the start of the current_obj AP
+          size :  size of the data items (1, 2, or 4)
+          data :  binary data to send
+        """
+
+        assert size == 1 or size == 2 or size == 4, 'Size must be 1, 2, or 4'
+        length = len(data)
+        num = length // size
+        self.qspy.sendPoke(offset, size, num, data)
+        self.expect('           Trg-Ack  QS_RX_POKE')
+
+
     def expect(self, match):
         """ asserts that match string is sent by the cut
 
@@ -409,7 +457,7 @@ class qutest_context():
         #recordId, line = self.qspy.parse_QS_TEXT(record)
         #print('OnRecord_QS_TEXT record:{0}, line:"{1}"'.format(recordId.name, line) )
 
-def qutest_main():
+def main():
     """ Main entry point for qutest """
 
     options = ['-v', '--tb=short']
@@ -457,4 +505,4 @@ def qutest_main():
     pytest.main(options)
 
 if __name__ == "__main__":
-    qutest_main()
+    main()
