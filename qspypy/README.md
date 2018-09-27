@@ -1,3 +1,6 @@
+# NOTE 
+This project is nolonger being maintained from this repository.
+Please use the newer version that is part of the [QTools](https://github.com/QuantumLeaps/qtools) collection. 
 
 # The qspypy package 
 The **qspypy** package is a rewrite of the existing Tcl qspy and qutest scripts 
